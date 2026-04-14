@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.0] - 2026-04-03
+
+### Changed
+
+- Refactored `extension.ts` for contributor maintainability. Hook registrations are now driven by a `HOOKS` array (`HookDef` interface) — adding a new hook event requires a single entry in one place instead of changes across four functions. Notification levels extracted into a `LEVELS` const with a `Level` type to eliminate scattered string literals. `handleSignal` is now driven by a `SIGNAL_MAP` instead of repeated branches. `syncConfig` loops over `HOOKS` so default sounds are colocated with their hook definition. `getEventLevel` reads directly from VS Code config instead of disk.
+
 ## [2.1.1] - 2026-04-03
 
 ### Fixed

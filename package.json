@@ -2,7 +2,7 @@
   "name": "claude-notifier",
   "displayName": "Claude Notifier",
   "description": "Plays distinct sounds when Claude Code finishes a task or needs your input",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "icon": "media/icon.png",
   "publisher": "SingularityInc",
   "repository": {
