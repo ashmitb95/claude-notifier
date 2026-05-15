@@ -2,7 +2,7 @@
 // Claude Notifier — PermissionRequest hook (v3)
 // Plays a sound + shows a notification when Claude needs permission to use a tool.
 const { isMuted, readConfig } = require("./_lib/config");
-const { resolveSound } = require("./_lib/sounds");
+const { resolveSound, BUNDLED_FALLBACK } = require("./_lib/sounds");
 const { playSound } = require("./_lib/play");
 const { showNotification } = require("./_lib/notify");
 const { writeSignal } = require("./_lib/signal");
@@ -26,7 +26,7 @@ process.stdin.on("end", () => {
 
   if (level === "sound+popup" || level === "sound") {
     const sound = resolveSound(cfg.sound, "/System/Library/Sounds/Glass.aiff", "C:\\Windows\\Media\\Windows Notify.wav");
-    playSound(sound);
+    playSound(sound, BUNDLED_FALLBACK.needsPermission);
   }
 
   if (level === "sound+popup" || level === "popup") {

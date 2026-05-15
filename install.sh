@@ -30,6 +30,12 @@ for lib in platform.js paths.js sounds.js config.js play.js notify.js signal.js 
   curl -fsSL "$REPO_RAW/hook/_lib/$lib" -o "$HOOKS_DIR/_lib/$lib"
 done
 
+# Bundled fallback sounds (played when the configured system sound is missing)
+mkdir -p "$HOOKS_DIR/_lib/sounds"
+for wav in task-complete.wav needs-input.wav question.wav; do
+  curl -fsSL "$REPO_RAW/media/sounds/$wav" -o "$HOOKS_DIR/_lib/sounds/$wav"
+done
+
 if [ ! -f "$SETTINGS_FILE" ]; then
   echo '{}' > "$SETTINGS_FILE"
 fi

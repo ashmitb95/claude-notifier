@@ -27,7 +27,7 @@ if ($level -eq 'off') { exit 0 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'sound') {
     $sound = Resolve-NotifierSound -Name $cfg.sound -Default 'C:\Windows\Media\tada.wav'
-    Invoke-NotifierSound -Path $sound
+    Invoke-NotifierSound -Path $sound -Fallback $LibBundledFallback.taskCompleted
 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'popup') {

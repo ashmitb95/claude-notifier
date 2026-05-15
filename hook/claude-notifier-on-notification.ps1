@@ -10,7 +10,7 @@ try { $data = $raw | ConvertFrom-Json } catch { exit 0 }
 if ($data.notification_type -ne 'permission_prompt') { exit 0 }
 if (Test-NotifierMuted) { exit 0 }
 
-Invoke-NotifierSound -Path 'C:\Windows\Media\Windows Notify.wav'
+Invoke-NotifierSound -Path 'C:\Windows\Media\Windows Notify.wav' -Fallback $LibBundledFallback.needsPermission
 
 $message = if ($data.message) { $data.message } else { 'Claude needs your permission.' }
 Show-NotifierNotification -Message $message
