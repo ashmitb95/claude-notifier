@@ -79,12 +79,15 @@ function Show-NotifierNotification([string]$Message) {
     } catch {}
 }
 
-# Write a signal for the extension. Format: "<reason> <unix-secs> [cwd]".
-# Matches the existing PS1 timestamp format (seconds, not ms).
-function Write-NotifierSignal([string]$Reason, [string]$Cwd) {
+# Write a signal for the extension.
+# Format v2: "<reason> <ts> <session_id|-> [cwd]" (matches hook/_lib/signal.js).
+# Session id is whitespace-stripped; "-" when absent.
+function Write-NotifierSignal([string]$Reason, [string]$SessionId, [string]$Cwd) {
     try {
         $ts = (Get-Date -UFormat %s)
-        $payload = if ($Cwd) { "$Reason $ts $Cwd" } else { "$Reason $ts" }
+        $sid = if ($SessionId) { ($SessionId -replace '\s+', '') } else { '-' }
+        if (-not $sid) { $sid = '-' }
+        $payload = if ($Cwd) { "$Reason $ts $sid $Cwd" } else { "$Reason $ts $sid" }
         Set-Content -Path $LibSignalFile -Value $payload -NoNewline
     } catch {}
 }

@@ -20,7 +20,7 @@ echo "Installing Claude Notifier..."
 
 mkdir -p "$HOOKS_DIR" "$HOOKS_DIR/_lib"
 
-for script in claude-notifier-on-stop.js claude-notifier-on-permission.js claude-notifier-on-question.js; do
+for script in claude-notifier-on-stop.js claude-notifier-on-permission.js claude-notifier-on-question.js claude-notifier-on-prompt.js; do
   curl -fsSL "$REPO_RAW/hook/$script" -o "$HOOKS_DIR/$script"
   chmod +x "$HOOKS_DIR/$script"
 done
@@ -43,6 +43,7 @@ fi
 STOP_HOOK="$HOOKS_DIR/claude-notifier-on-stop.js"
 PERM_HOOK="$HOOKS_DIR/claude-notifier-on-permission.js"
 QUESTION_HOOK="$HOOKS_DIR/claude-notifier-on-question.js"
+PROMPT_HOOK="$HOOKS_DIR/claude-notifier-on-prompt.js"
 
 node -e "
 const fs = require('fs');
@@ -50,7 +51,7 @@ const settings = JSON.parse(fs.readFileSync('$SETTINGS_FILE', 'utf-8'));
 if (!settings.hooks) settings.hooks = {};
 
 // Clean stale entries from all hook types
-for (const t of ['Stop', 'PermissionRequest', 'PreToolUse', 'Notification']) {
+for (const t of ['Stop', 'PermissionRequest', 'PreToolUse', 'Notification', 'UserPromptSubmit']) {
   if (settings.hooks[t]) {
     settings.hooks[t] = settings.hooks[t].filter(
       e => !e.hooks?.some(h => h.command?.includes('claude-notifier'))
@@ -76,6 +77,12 @@ if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
 settings.hooks.PreToolUse.push({
   matcher: 'AskUserQuestion',
   hooks: [{ type: 'command', command: 'node \"$QUESTION_HOOK\"' }]
+});
+
+// UserPromptSubmit hook — coordination only, no sound (advances stage dedup)
+if (!settings.hooks.UserPromptSubmit) settings.hooks.UserPromptSubmit = [];
+settings.hooks.UserPromptSubmit.push({
+  hooks: [{ type: 'command', command: 'node \"$PROMPT_HOOK\"' }]
 });
 
 fs.writeFileSync('$SETTINGS_FILE', JSON.stringify(settings, null, 2) + '\n');

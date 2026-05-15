@@ -1,4 +1,4 @@
-# Claude Notifier - Stop hook (PowerShell, v4)
+# Claude Notifier - Stop hook (PowerShell)
 # Writes a "done" signal for the VSCode extension to debounce. When no
 # extension is active (terminal-only), plays sound/notification directly.
 $ErrorActionPreference = 'SilentlyContinue'
@@ -14,7 +14,7 @@ $cwd = ""
 if ($data.cwd) { $cwd = "$($data.cwd)" }
 if (-not $cwd) { $cwd = (Get-Location).Path }
 
-Write-NotifierSignal -Reason 'done' -Cwd $cwd
+Write-NotifierSignal -Reason 'done' -SessionId $data.session_id -Cwd $cwd
 
 # If a VSCode window owns this cwd, the extension handles sound/notification
 # with debounce. Otherwise fall through to direct playback.

@@ -88,7 +88,8 @@
           "default": 2000,
           "minimum": 0,
           "maximum": 10000,
-          "description": "Milliseconds to wait after a 'done' signal before notifying. Collapses rapid subtask Stop events into a single notification. Lower = snappier; higher = safer against duplicates."
+          "deprecationMessage": "Deprecated and ignored. Per-session stage dedup replaces it. Safe to delete from your settings.",
+          "description": "Deprecated and ignored. Per-session stage dedup handles rapid 'done' signal coalescing."
         }
       }
     }

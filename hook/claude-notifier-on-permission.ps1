@@ -1,4 +1,4 @@
-# Claude Notifier - PermissionRequest hook (PowerShell, v3)
+# Claude Notifier - PermissionRequest hook (PowerShell)
 # Plays sound + shows notification when Claude needs permission.
 $ErrorActionPreference = 'SilentlyContinue'
 . (Join-Path $PSScriptRoot '_lib.ps1')
@@ -26,6 +26,6 @@ if ($level -eq 'sound+popup' -or $level -eq 'popup') {
     Show-NotifierNotification -Message "Claude needs permission to use $tool."
 }
 
-Write-NotifierSignal -Reason 'input'
+Write-NotifierSignal -Reason 'input' -SessionId $data.session_id
 
 exit 0

@@ -34,6 +34,17 @@ export const HOOKS: HookDef[] = [
     eventKey: "asksQuestion",
     defaultSound: "Funk",
   },
+  {
+    // Coordination-only hook: tells the extension's stage state machine to
+    // advance when the user submits a new prompt. No user-visible behavior
+    // — no sound, no notification, no settings knobs. eventKey/defaultSound
+    // unused for this hook but kept non-empty so generic registry loops
+    // (syncConfig, etc.) don't choke on undefined values.
+    baseName: "claude-notifier-on-prompt",
+    type: "UserPromptSubmit",
+    eventKey: "userPromptSubmit",
+    defaultSound: "",
+  },
 ];
 
 export function hookFileName(hook: HookDef): string {
@@ -45,4 +56,4 @@ export function hookDestPath(hook: HookDef): string {
 }
 
 /** Hook types that may appear in settings.json (used for cleanup). */
-export const ALL_HOOK_TYPES = ["Stop", "PermissionRequest", "PreToolUse", "Notification"] as const;
+export const ALL_HOOK_TYPES = ["Stop", "PermissionRequest", "PreToolUse", "Notification", "UserPromptSubmit"] as const;

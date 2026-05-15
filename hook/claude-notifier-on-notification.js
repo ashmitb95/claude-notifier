@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Claude Notifier — Notification hook (v2)
+// Claude Notifier — Notification hook
 // Plays the "needs input" sound when Claude posts a permission_prompt
 // notification. Uses fixed sound (not config-driven) — this hook fires
 // before the PermissionRequest hook can react.
@@ -27,7 +27,7 @@ process.stdin.on("end", () => {
   const message = input.message || "Claude needs your permission.";
   showNotification(message);
 
-  writeSignal("input");
+  writeSignal("input", input.session_id);
 
   process.exit(0);
 });

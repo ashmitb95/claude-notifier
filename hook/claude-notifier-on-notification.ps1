@@ -1,4 +1,4 @@
-# Claude Notifier - Notification hook (PowerShell, v2)
+# Claude Notifier - Notification hook (PowerShell)
 # Plays sound + shows notification on permission_prompt notifications.
 # Uses fixed sound (not config-driven).
 $ErrorActionPreference = 'SilentlyContinue'
@@ -15,6 +15,6 @@ Invoke-NotifierSound -Path 'C:\Windows\Media\Windows Notify.wav' -Fallback $LibB
 $message = if ($data.message) { $data.message } else { 'Claude needs your permission.' }
 Show-NotifierNotification -Message $message
 
-Write-NotifierSignal -Reason 'input'
+Write-NotifierSignal -Reason 'input' -SessionId $data.session_id
 
 exit 0
