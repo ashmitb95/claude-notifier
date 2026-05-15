@@ -94,8 +94,10 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package",
     "vscode:uninstall": "node ./out/uninstall.js"
   },
   "devDependencies": {
