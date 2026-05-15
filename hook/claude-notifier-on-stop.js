@@ -14,6 +14,26 @@ const MUTE_FLAG = path.join(HOOKS_DIR, "claude-notifier-muted");
 const SIGNAL_FILE = path.join(HOOKS_DIR, "claude-signal");
 const ACTIVE_DIR = path.join(HOOKS_DIR, "claude-notifier-active.d");
 
+// Walk the parent PID chain so the extension can match this hook's invocation
+// to a specific vscode.window.Terminal (whose processId is the shell pid —
+// one of our ancestors). macOS/Linux only; Windows skips and gets no per-tab
+// focus (just window focus).
+function getAncestorPids() {
+  if (process.platform === "win32") return [];
+  const chain = [];
+  let pid = process.ppid;
+  while (pid && pid > 1 && chain.length < 20) {
+    chain.push(pid);
+    try {
+      const out = require("child_process").execFileSync("/bin/ps", ["-o", "ppid=", "-p", String(pid)], { encoding: "utf-8" }).trim();
+      const next = parseInt(out, 10);
+      if (!next || Number.isNaN(next) || next === pid) break;
+      pid = next;
+    } catch { break; }
+  }
+  return chain;
+}
+
 function findTerminalNotifier() {
   if (process.platform !== "darwin") return null;
   for (const c of ["/opt/homebrew/bin/terminal-notifier", "/usr/local/bin/terminal-notifier"]) {
@@ -121,9 +141,15 @@ process.stdin.on("end", () => {
   const cwd = (input && input.cwd) || process.cwd() || "";
 
   // Write signal for the VSCode extension (which debounces "done" signals
-  // and routes them to the matching window via cwd).
+  // and routes them to the matching window via cwd). Format:
+  //   done <ts> <ancestor_pids_csv|-> <session_id|-> <cwd>
+  // ancestor pids let the extension identify which integrated terminal fired
+  // this hook; session_id lets it focus the specific Claude Code editor tab.
   try {
-    fs.writeFileSync(SIGNAL_FILE, `done ${Date.now()} ${cwd}`);
+    const pids = getAncestorPids();
+    const pidField = pids.length > 0 ? pids.join(",") : "-";
+    const sid = (input && input.session_id) ? String(input.session_id).replace(/\s+/g, "") : "-";
+    fs.writeFileSync(SIGNAL_FILE, `done ${Date.now()} ${pidField} ${sid} ${cwd}`);
   } catch {}
 
   // If a VSCode window owns this cwd, the extension handles sound/notification

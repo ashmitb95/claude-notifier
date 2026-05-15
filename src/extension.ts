@@ -22,6 +22,10 @@ const ACTIVE_DIR = path.join(HOOKS_DIR, "claude-notifier-active.d");
 const OWN_PID_FILE = path.join(ACTIVE_DIR, String(process.pid));
 const CONFIG_FILE = path.join(HOOKS_DIR, "claude-notifier-config.json");
 const SETTINGS_FILE = path.join(CLAUDE_DIR, "settings.json");
+// Per-window focus channel: terminal-notifier's click action writes
+// "<ts> <cwd>" here, and the extension whose workspace matches the cwd
+// focuses the terminal that fired the most recent Stop signal.
+const FOCUS_SIGNAL_FILE = path.join(HOOKS_DIR, "claude-notifier-focus-signal");
 
 const MACOS_SOUNDS: Record<string, string> = {
   Basso: "/System/Library/Sounds/Basso.aiff", Blow: "/System/Library/Sounds/Blow.aiff",
@@ -85,9 +89,16 @@ function showLocalNotification(message: string) {
     exec(`powershell -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`, { timeout: 5000 });
   } else if (IS_MAC && terminalNotifierPath) {
     const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "";
-    const executeCmd = codeCliPath && folder
+    // Write a focus-signal first (so the right window's extension can focus
+    // its matched terminal), then activate VS Code. Both effects are
+    // independent; the `code` activation brings the window forward and the
+    // signal fs.watch fires `terminal.show()` inside that window.
+    const activateCmd = codeCliPath && folder
       ? `${shellQuote(codeCliPath)} ${shellQuote(folder)}`
       : `osascript -e 'tell application "Visual Studio Code" to activate'`;
+    const focusPayload = `${Date.now()} ${folder}`;
+    const focusCmd = `/bin/echo ${shellQuote(focusPayload)} > ${shellQuote(FOCUS_SIGNAL_FILE)}`;
+    const executeCmd = folder ? `${focusCmd} && ${activateCmd}` : activateCmd;
     const args = [
       "-title", "Claude Notifier",
       "-message", message,
@@ -115,8 +126,15 @@ const ALL_HOOK_TYPES = ["Stop", "PermissionRequest", "PreToolUse", "Notification
 
 let statusBarItem: vscode.StatusBarItem;
 let watcher: fs.FSWatcher | null = null;
+let focusWatcher: fs.FSWatcher | null = null;
 let soundEnabled = true;
 let doneDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+// Terminal that fired the most recent "done" signal in this window. Used by
+// the focus-signal handler to route click-to-tab focus.
+let lastDoneTerminal: vscode.Terminal | null = null;
+// Session id of the most recent Stop signal received in this window. Used as
+// the focus target for the Claude Code extension's panel.
+let lastDoneSessionId: string | null = null;
 
 function isPidAlive(pid: number): boolean {
   try { process.kill(pid, 0); return true; } catch { return false; }
@@ -148,6 +166,39 @@ function cleanStalePidFiles() {
       }
     }
   } catch {}
+}
+
+async function findTerminalByAncestors(ancestorPids: number[]): Promise<vscode.Terminal | null> {
+  for (const term of vscode.window.terminals) {
+    try {
+      const pid = await term.processId;
+      if (pid && ancestorPids.includes(pid)) return term;
+    } catch {}
+  }
+  return null;
+}
+
+async function handleFocusSignal() {
+  let content = "";
+  try { content = fs.readFileSync(FOCUS_SIGNAL_FILE, "utf-8").trim(); } catch { return; }
+  // Format: "<ts> <cwd...>"
+  const firstSpace = content.indexOf(" ");
+  const cwd = firstSpace >= 0 ? content.slice(firstSpace + 1) : "";
+  if (!cwd) return;
+  const folders = getOwnWorkspaceFolders();
+  if (folders.length > 0 && !folders.some((f) => cwdMatchesFolder(cwd, f))) return;
+  if (lastDoneTerminal) {
+    try { lastDoneTerminal.show(); return; } catch {}
+  }
+  // Focus the Claude Code editor tab for the session that just finished.
+  // claude-vscode.editor.open(sessionId) reveals the existing panel if the
+  // session id is open; we only call it when we have a session id to avoid
+  // creating a new empty panel.
+  if (lastDoneSessionId) {
+    try {
+      await vscode.commands.executeCommand("claude-vscode.editor.open", lastDoneSessionId);
+    } catch {}
+  }
 }
 
 function playRemoteSound() {
@@ -189,6 +240,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   if (!fs.existsSync(SIGNAL_FILE)) {
     fs.writeFileSync(SIGNAL_FILE, "");
+  }
+  if (!fs.existsSync(FOCUS_SIGNAL_FILE)) {
+    fs.writeFileSync(FOCUS_SIGNAL_FILE, "");
   }
 
   statusBarItem = vscode.window.createStatusBarItem(
@@ -236,6 +290,13 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
   context.subscriptions.push({ dispose: () => watcher?.close() });
+
+  focusWatcher = fs.watch(FOCUS_SIGNAL_FILE, (eventType) => {
+    if (eventType === "change") {
+      handleFocusSignal();
+    }
+  });
+  context.subscriptions.push({ dispose: () => focusWatcher?.close() });
 }
 
 function updateStatusBar() {
@@ -289,11 +350,20 @@ function handleSignal() {
     return;
   }
 
-  // Signal format: "<reason> <timestamp> <cwd...>" — cwd may contain spaces.
-  const firstSpace = content.indexOf(" ");
-  const secondSpace = firstSpace >= 0 ? content.indexOf(" ", firstSpace + 1) : -1;
-  const reason = firstSpace < 0 ? content : content.slice(0, firstSpace);
-  const cwd = secondSpace >= 0 ? content.slice(secondSpace + 1) : "";
+  // Signal formats (Stop hook is v3; question/input still write v1):
+  //   v3: "done <ts> <pids_csv|-> <session_id|-> <cwd...>"
+  //   v1: "<reason> <ts> <cwd...>" or "<reason> <ts>"
+  // Detect v3 by checking whether parts[2] is digits-CSV or "-" (PID field).
+  const parts = content.split(" ");
+  const reason = parts[0] ?? "";
+  const maybePids = parts[2];
+  const hasPidsField = maybePids === "-" || /^[0-9]+(,[0-9]+)*$/.test(maybePids ?? "");
+  const ancestorPids = hasPidsField && maybePids !== "-"
+    ? maybePids!.split(",").map((s) => parseInt(s, 10)).filter((n) => Number.isFinite(n))
+    : [];
+  const sessionId = hasPidsField && parts[3] && parts[3] !== "-" ? parts[3] : null;
+  const cwdStart = hasPidsField ? 4 : 2;
+  const cwd = parts.slice(cwdStart).join(" ");
 
   // Each window only handles signals fired from inside its own workspace.
   // Signals without a cwd (older hook scripts) fall through to all windows
@@ -302,6 +372,15 @@ function handleSignal() {
     const folders = getOwnWorkspaceFolders();
     if (folders.length > 0 && !folders.some((f) => cwdMatchesFolder(cwd, f))) {
       return;
+    }
+  }
+
+  if (reason === "done") {
+    lastDoneSessionId = sessionId;
+    if (ancestorPids.length > 0) {
+      findTerminalByAncestors(ancestorPids).then((t) => { lastDoneTerminal = t; });
+    } else {
+      lastDoneTerminal = null;
     }
   }
 
@@ -479,7 +558,7 @@ function setupHooks(context: vscode.ExtensionContext) {
 }
 
 function teardownHooks() {
-  for (const file of [STOP_HOOK, PERMISSION_HOOK, QUESTION_HOOK, SIGNAL_FILE, MUTE_FLAG, CONFIG_FILE]) {
+  for (const file of [STOP_HOOK, PERMISSION_HOOK, QUESTION_HOOK, SIGNAL_FILE, FOCUS_SIGNAL_FILE, MUTE_FLAG, CONFIG_FILE]) {
     try { fs.unlinkSync(file); } catch {}
   }
   try { fs.rmdirSync(ACTIVE_DIR); } catch {}
@@ -527,6 +606,10 @@ export function deactivate() {
   if (watcher) {
     watcher.close();
     watcher = null;
+  }
+  if (focusWatcher) {
+    focusWatcher.close();
+    focusWatcher = null;
   }
   // Drop only this window's PID marker. Leave hook scripts and settings.json
   // entries in place so Claude Code outside VS Code (terminal, desktop app)
