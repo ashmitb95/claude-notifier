@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Claude Notifier — PreToolUse hook for AskUserQuestion (v3)
+// Claude Notifier — PreToolUse hook for AskUserQuestion
 // Plays a sound + shows a notification when Claude asks the user a question.
 const { isMuted, readConfig } = require("./_lib/config");
 const { resolveSound, BUNDLED_FALLBACK } = require("./_lib/sounds");
@@ -33,7 +33,7 @@ process.stdin.on("end", () => {
     showNotification("Claude is asking you a question.");
   }
 
-  writeSignal("question");
+  writeSignal("question", input.session_id);
 
   process.exit(0);
 });

@@ -137,6 +137,7 @@ export function teardownHooks(): void {
     "claude-notifier-on-permission",
     "claude-notifier-on-question",
     "claude-notifier-on-notification",
+    "claude-notifier-on-prompt",
   ];
   const legacyHookFiles = legacyNames.flatMap((name) =>
     [".js", ".ps1", ".sh"].map((ext) => path.join(HOOKS_DIR, `${name}${ext}`))

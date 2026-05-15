@@ -8,7 +8,7 @@ import { IS_MAC } from "../paths";
 // focus VS Code instead of Script Editor. We use -execute (not -activate)
 // because -activate is broken on recent macOS, and we run the `code` CLI so
 // the specific workspace window comes forward — no osascript on the click
-// path means no Script Editor flash. See issue #12.
+// path means no Script Editor flash.
 let terminalNotifierPath: string | null = null;
 let codeCliPath: string | null = null;
 
@@ -49,7 +49,7 @@ export function initDiscovery(): void {
 /**
  * Bootstrap: install terminal-notifier via Homebrew so macOS notifications
  * can route clicks back to VS Code. The osascript fallback works without it
- * but its clicks open Script Editor (issue #12).
+ * but its clicks open Script Editor instead.
  */
 export function installTerminalNotifierFlow(): void {
   if (!IS_MAC) {

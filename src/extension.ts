@@ -7,8 +7,11 @@ import { initDiscovery, installTerminalNotifierFlow } from "./notifications/term
 import { writeOwnPidFile, cleanStalePidFiles } from "./routing/cwd";
 import { startSignalWatcher } from "./signals/dispatch";
 import { createStatusBar, toggleSound } from "./ui/status-bar";
+import { initLogger, log } from "./log";
 
 export function activate(context: vscode.ExtensionContext) {
+  initLogger(context);
+  log("activate: extensionPath=", context.extensionPath);
   setupHooks(context.extensionPath);
   syncConfig();
   initDiscovery();

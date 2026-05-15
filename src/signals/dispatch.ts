@@ -3,18 +3,20 @@ import * as vscode from "vscode";
 import { SIGNAL_FILE } from "../paths";
 import { LEVELS } from "./types";
 import { parseSignal } from "./parser";
+import * as stage from "./stage";
+import { log } from "../log";
 import { getOwnWorkspaceFolders, cwdMatchesFolder } from "../routing/cwd";
 import { getEventLevel, getEventConfig } from "../settings/sync";
 import { playLocalSound } from "../notifications/sound";
 import { showLocalNotification } from "../notifications/local";
 import { playRemoteSound } from "../notifications/remote";
 
-let doneDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let watcher: fs.FSWatcher | null = null;
+let deprecationLogged = false;
 
 /**
  * Watch SIGNAL_FILE for changes and route to handleSignal(). Returns a
- * Disposable that closes the watcher.
+ * Disposable that closes the watcher and tears down per-session stage state.
  */
 export function startSignalWatcher(): vscode.Disposable {
   if (!fs.existsSync(SIGNAL_FILE)) {
@@ -25,7 +27,14 @@ export function startSignalWatcher(): vscode.Disposable {
       handleSignal();
     }
   });
-  return { dispose: () => { watcher?.close(); watcher = null; } };
+  log("signal watcher started:", SIGNAL_FILE);
+  return {
+    dispose: () => {
+      watcher?.close();
+      watcher = null;
+      stage.reset();
+    },
+  };
 }
 
 function handleSignal(): void {
@@ -35,12 +44,21 @@ function handleSignal(): void {
   } catch {
     return;
   }
+  if (!content) return;
 
-  const { reason, cwd } = parseSignal(content);
+  const { reason, sessionId, cwd } = parseSignal(content);
+  log("signal:", reason, sessionId ?? "-", cwd || "(no cwd)");
+
+  // UserPromptSubmit is coordination-only — advance the stage and exit.
+  // No cwd routing for prompt; the prompt advance applies to every window
+  // tracking this session (or the anonymous session).
+  if (reason === "prompt") {
+    stage.advance(sessionId);
+    return;
+  }
 
   // Each window only handles signals fired from inside its own workspace.
-  // Signals without a cwd (older hook scripts) fall through to all windows
-  // for backwards compatibility.
+  // Signals without a cwd (older hook scripts, prompt hook) fall through.
   if (cwd) {
     const folders = getOwnWorkspaceFolders();
     if (folders.length > 0 && !folders.some((f) => cwdMatchesFolder(cwd, f))) {
@@ -48,34 +66,40 @@ function handleSignal(): void {
     }
   }
 
-  if (reason === "done") {
-    // Debounce "done" signals — Claude fires Stop hooks between subtasks.
-    // Only notify after N ms of silence (no new signals).
-    const debounceMs = vscode.workspace
-      .getConfiguration("claudeNotifier")
-      .get<number>("doneDebounceMs", 2000);
-    if (doneDebounceTimer) clearTimeout(doneDebounceTimer);
-    doneDebounceTimer = setTimeout(() => {
-      doneDebounceTimer = null;
-      showNotification("done");
-    }, debounceMs);
-  } else {
-    // "question" and "input" signals are immediate — user action is needed.
-    // Cancel any pending "done" notification (the stop after a question is expected).
-    if (doneDebounceTimer) {
-      clearTimeout(doneDebounceTimer);
-      doneDebounceTimer = null;
+  if (reason === "done" || reason === "input" || reason === "question") {
+    // Stage dedup: at most one notification per (session, reason) per stage.
+    // Stage advances on UserPromptSubmit (prompt signal) or idle (30 min).
+    if (!stage.shouldFire(sessionId, reason)) {
+      return;
     }
-    if (reason === "input" || reason === "question") {
-      showNotification(reason);
-    }
+    showNotification(reason);
+  }
+
+  // doneDebounceMs is deprecated — stage dedup replaces it. Log once so
+  // anyone who set the value sees what's going on.
+  warnDeprecatedSettingOnce();
+}
+
+function warnDeprecatedSettingOnce(): void {
+  if (deprecationLogged) return;
+  const raw = vscode.workspace.getConfiguration("claudeNotifier").inspect<number>("doneDebounceMs");
+  const explicit =
+    raw?.globalValue !== undefined ||
+    raw?.workspaceValue !== undefined ||
+    raw?.workspaceFolderValue !== undefined;
+  if (explicit) {
+    log(
+      "[config] claudeNotifier.doneDebounceMs is deprecated and ignored; per-session stage dedup replaces it. Remove the setting to silence this notice."
+    );
+    deprecationLogged = true;
   }
 }
 
 function showNotification(reason: string): void {
   // Architecture note: "question" and "input" local sounds are played by their
   // respective hook scripts (PreToolUse / PermissionRequest) — not the extension.
-  // Only "done" local sounds are played here, because the extension debounces them.
+  // Only "done" local sounds are played here, because the extension is the
+  // only place that can debounce across multiple Stop signals from one task.
   const isRemote = !!vscode.env.remoteName;
 
   if (reason === "input") {

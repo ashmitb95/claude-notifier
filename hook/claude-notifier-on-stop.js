@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Claude Notifier — Stop hook (v4)
+// Claude Notifier — Stop hook
 // Writes a "done" signal for the VSCode extension to debounce. When no
 // extension is active (terminal-only Claude session, or session outside any
 // open workspace), plays sound/notification directly as a fallback.
@@ -22,7 +22,7 @@ process.stdin.on("end", () => {
 
   const cwd = (input && input.cwd) || process.cwd() || "";
 
-  writeSignal("done", cwd);
+  writeSignal("done", input.session_id, cwd);
 
   // If a VSCode window owns this cwd, the extension handles sound/notification
   // with debounce. Otherwise fall through to direct playback.

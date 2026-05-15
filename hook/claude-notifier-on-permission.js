@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Claude Notifier — PermissionRequest hook (v3)
+// Claude Notifier — PermissionRequest hook
 // Plays a sound + shows a notification when Claude needs permission to use a tool.
 const { isMuted, readConfig } = require("./_lib/config");
 const { resolveSound, BUNDLED_FALLBACK } = require("./_lib/sounds");
@@ -34,7 +34,7 @@ process.stdin.on("end", () => {
     showNotification(`Claude needs permission to use ${tool}.`);
   }
 
-  writeSignal("input");
+  writeSignal("input", input.session_id);
 
   process.exit(0);
 });

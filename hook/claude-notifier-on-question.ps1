@@ -1,4 +1,4 @@
-# Claude Notifier - PreToolUse hook for AskUserQuestion (PowerShell, v3)
+# Claude Notifier - PreToolUse hook for AskUserQuestion (PowerShell)
 # Plays sound + shows notification when Claude asks the user a question.
 $ErrorActionPreference = 'SilentlyContinue'
 . (Join-Path $PSScriptRoot '_lib.ps1')
@@ -25,6 +25,6 @@ if ($level -eq 'sound+popup' -or $level -eq 'popup') {
     Show-NotifierNotification -Message 'Claude is asking you a question.'
 }
 
-Write-NotifierSignal -Reason 'question'
+Write-NotifierSignal -Reason 'question' -SessionId $data.session_id
 
 exit 0
