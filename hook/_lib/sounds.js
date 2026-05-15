@@ -1,4 +1,18 @@
+const path = require("path");
 const { USE_WIN, IS_LINUX } = require("./platform");
+
+// Bundled fallback sounds ship inside the .vsix at <ext>/media/sounds/, and
+// setupHooks copies them alongside this file to ~/.claude/hooks/_lib/sounds/.
+// playSound() uses these only when the configured primary file doesn't exist
+// (system sound theme missing, cross-platform misconfig, etc.). User-selected
+// presets are still the default; this is purely a resilience fallback.
+const BUNDLED_SOUNDS_DIR = path.join(__dirname, "sounds");
+const BUNDLED_FALLBACK = {
+  taskCompleted:   path.join(BUNDLED_SOUNDS_DIR, "task-complete.wav"),
+  needsPermission: path.join(BUNDLED_SOUNDS_DIR, "needs-input.wav"),
+  asksQuestion:    path.join(BUNDLED_SOUNDS_DIR, "question.wav"),
+};
+
 
 const MACOS_SOUNDS = {
   Basso: "/System/Library/Sounds/Basso.aiff", Blow: "/System/Library/Sounds/Blow.aiff",
@@ -47,5 +61,6 @@ function resolveSound(name, defaultMac, defaultWin) {
 
 module.exports = {
   MACOS_SOUNDS, WIN_SOUNDS, LINUX_SOUNDS, LINUX_SOUNDS_DIR,
+  BUNDLED_SOUNDS_DIR, BUNDLED_FALLBACK,
   resolveSound,
 };

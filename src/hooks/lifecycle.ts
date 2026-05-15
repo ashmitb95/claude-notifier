@@ -73,6 +73,10 @@ export function setupHooks(extensionPath: string): void {
 }
 
 function copyHookLib(extensionPath: string): void {
+  // Bundled WAVs are common to both platforms — system sounds are still
+  // primary, these only play when the configured file is missing.
+  copyBundledSounds(extensionPath);
+
   if (IS_WIN) {
     syncFile(
       path.join(extensionPath, "hook", "_lib.ps1"),
@@ -86,6 +90,29 @@ function copyHookLib(extensionPath: string): void {
   for (const entry of fs.readdirSync(libSrcDir)) {
     if (!entry.endsWith(".js")) continue;
     syncFile(path.join(libSrcDir, entry), path.join(libDestDir, entry));
+  }
+}
+
+function copyBundledSounds(extensionPath: string): void {
+  const srcDir = path.join(extensionPath, "media", "sounds");
+  const destDir = path.join(HOOKS_DIR, "_lib", "sounds");
+  fs.mkdirSync(destDir, { recursive: true });
+  let entries: string[] = [];
+  try { entries = fs.readdirSync(srcDir); } catch { return; }
+  for (const entry of entries) {
+    if (!entry.endsWith(".wav")) continue;
+    syncBinaryFile(path.join(srcDir, entry), path.join(destDir, entry));
+  }
+}
+
+function syncBinaryFile(src: string, dest: string): void {
+  // Same idempotent-copy semantics as syncFile, but for binary content.
+  // Compares byte-for-byte to avoid rewriting unchanged WAVs.
+  const srcContent = fs.readFileSync(src);
+  let destContent: Buffer | null = null;
+  try { destContent = fs.readFileSync(dest); } catch {}
+  if (!destContent || !srcContent.equals(destContent)) {
+    fs.writeFileSync(dest, srcContent);
   }
 }
 
@@ -136,15 +163,10 @@ export function teardownHooks(): void {
     fs.rmdirSync(ACTIVE_DIR);
   } catch {}
 
-  // Shared hook library: _lib/*.js (mac/linux/wsl) and _lib.ps1 (win)
+  // Shared hook library: _lib/*.js + _lib/sounds/*.wav (mac/linux/wsl) and
+  // _lib.ps1 (win). Recursive remove handles the nested sounds/ directory.
   try { fs.unlinkSync(path.join(HOOKS_DIR, "_lib.ps1")); } catch {}
-  try {
-    const libDir = path.join(HOOKS_DIR, "_lib");
-    for (const entry of fs.readdirSync(libDir)) {
-      try { fs.unlinkSync(path.join(libDir, entry)); } catch {}
-    }
-    fs.rmdirSync(libDir);
-  } catch {}
+  try { fs.rmSync(path.join(HOOKS_DIR, "_lib"), { recursive: true, force: true }); } catch {}
 
   // Older versions shipped a generated AppleScript shim — remove if present.
   try { fs.rmSync(path.join(HOOKS_DIR, "ClaudeNotifier.app"), { recursive: true, force: true }); } catch {}

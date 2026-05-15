@@ -8,6 +8,16 @@ $LibSignalFile = Join-Path $LibHooksDir 'claude-signal'
 $LibConfigFile = Join-Path $LibHooksDir 'claude-notifier-config.json'
 $LibActiveDir  = Join-Path $LibHooksDir 'claude-notifier-active.d'
 
+# Bundled fallback sounds ship inside the .vsix at <ext>/media/sounds/ and
+# setupHooks copies them to ~/.claude/hooks/_lib/sounds/. Invoke-NotifierSound
+# uses them only when the primary path doesn't exist on disk.
+$LibBundledSoundsDir = Join-Path $LibHooksDir '_lib\sounds'
+$LibBundledFallback = @{
+    taskCompleted   = Join-Path $LibBundledSoundsDir 'task-complete.wav'
+    needsPermission = Join-Path $LibBundledSoundsDir 'needs-input.wav'
+    asksQuestion    = Join-Path $LibBundledSoundsDir 'question.wav'
+}
+
 $LibWinSounds = @{
     'Windows Notify'     = 'C:\Windows\Media\Windows Notify.wav'
     'tada'               = 'C:\Windows\Media\tada.wav'
@@ -36,12 +46,20 @@ function Test-NotifierMuted() {
     return (Test-Path $LibMuteFlag)
 }
 
-# Play a sound file synchronously. Beeps on missing file. Silently swallows
-# errors — sound failure should never break a hook.
-function Invoke-NotifierSound([string]$Path) {
+# Play a sound file synchronously. Falls back to $Fallback if $Path doesn't
+# exist (e.g. user picked a sound that isn't installed); beeps if neither
+# exists. Silently swallows errors — sound failure should never break a hook.
+function Invoke-NotifierSound([string]$Path, [string]$Fallback) {
+    $finalPath = if ($Path -and (Test-Path $Path)) {
+        $Path
+    } elseif ($Fallback -and (Test-Path $Fallback)) {
+        $Fallback
+    } else {
+        $null
+    }
     try {
-        if (Test-Path $Path) {
-            (New-Object Media.SoundPlayer $Path).PlaySync()
+        if ($finalPath) {
+            (New-Object Media.SoundPlayer $finalPath).PlaySync()
         } else {
             [console]::Beep(800, 300)
         }

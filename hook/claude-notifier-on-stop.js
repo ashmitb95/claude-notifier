@@ -4,7 +4,7 @@
 // extension is active (terminal-only Claude session, or session outside any
 // open workspace), plays sound/notification directly as a fallback.
 const { isMuted, readConfig } = require("./_lib/config");
-const { resolveSound } = require("./_lib/sounds");
+const { resolveSound, BUNDLED_FALLBACK } = require("./_lib/sounds");
 const { playSound } = require("./_lib/play");
 const { showNotification } = require("./_lib/notify");
 const { extensionOwnsCwd } = require("./_lib/active");
@@ -35,7 +35,7 @@ process.stdin.on("end", () => {
 
   if (level === "sound+popup" || level === "sound") {
     const sound = resolveSound(cfg.sound, "/System/Library/Sounds/Hero.aiff", "C:\\Windows\\Media\\tada.wav");
-    playSound(sound);
+    playSound(sound, BUNDLED_FALLBACK.taskCompleted);
   }
 
   if (level === "sound+popup" || level === "popup") {
