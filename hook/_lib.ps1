@@ -1,0 +1,100 @@
+# Claude Notifier — shared PowerShell hook library.
+# Dot-sourced by each hook: `. (Join-Path $PSScriptRoot '_lib.ps1')`.
+$ErrorActionPreference = 'SilentlyContinue'
+
+$LibHooksDir   = $PSScriptRoot
+$LibMuteFlag   = Join-Path $LibHooksDir 'claude-notifier-muted'
+$LibSignalFile = Join-Path $LibHooksDir 'claude-signal'
+$LibConfigFile = Join-Path $LibHooksDir 'claude-notifier-config.json'
+$LibActiveDir  = Join-Path $LibHooksDir 'claude-notifier-active.d'
+
+$LibWinSounds = @{
+    'Windows Notify'     = 'C:\Windows\Media\Windows Notify.wav'
+    'tada'               = 'C:\Windows\Media\tada.wav'
+    'chimes'             = 'C:\Windows\Media\chimes.wav'
+    'chord'              = 'C:\Windows\Media\chord.wav'
+    'ding'               = 'C:\Windows\Media\ding.wav'
+    'notify'             = 'C:\Windows\Media\notify.wav'
+    'ringin'             = 'C:\Windows\Media\ringin.wav'
+    'Windows Background' = 'C:\Windows\Media\Windows Background.wav'
+}
+
+# Resolve a sound preset name to a Windows .wav path. Falls back to $Default
+# when the name is missing or unknown.
+function Resolve-NotifierSound([string]$Name, [string]$Default) {
+    if ($Name -and $LibWinSounds.ContainsKey($Name)) { return $LibWinSounds[$Name] }
+    return $Default
+}
+
+# Read claude-notifier-config.json. Returns $null on any error.
+function Read-NotifierConfig() {
+    try { return (Get-Content $LibConfigFile -Raw) | ConvertFrom-Json } catch { return $null }
+}
+
+# Returns $true when the global mute flag is set.
+function Test-NotifierMuted() {
+    return (Test-Path $LibMuteFlag)
+}
+
+# Play a sound file synchronously. Beeps on missing file. Silently swallows
+# errors — sound failure should never break a hook.
+function Invoke-NotifierSound([string]$Path) {
+    try {
+        if (Test-Path $Path) {
+            (New-Object Media.SoundPlayer $Path).PlaySync()
+        } else {
+            [console]::Beep(800, 300)
+        }
+    } catch {}
+}
+
+# Show a Windows balloon notification (title is always "Claude Notifier").
+function Show-NotifierNotification([string]$Message) {
+    try {
+        Add-Type -AssemblyName System.Windows.Forms
+        $n = New-Object System.Windows.Forms.NotifyIcon
+        $n.Icon = [System.Drawing.SystemIcons]::Information
+        $n.Visible = $true
+        $n.ShowBalloonTip(3000, 'Claude Notifier', $Message, [System.Windows.Forms.ToolTipIcon]::None)
+        Start-Sleep -Milliseconds 500
+        $n.Dispose()
+    } catch {}
+}
+
+# Write a signal for the extension. Format: "<reason> <unix-secs> [cwd]".
+# Matches the existing PS1 timestamp format (seconds, not ms).
+function Write-NotifierSignal([string]$Reason, [string]$Cwd) {
+    try {
+        $ts = (Get-Date -UFormat %s)
+        $payload = if ($Cwd) { "$Reason $ts $Cwd" } else { "$Reason $ts" }
+        Set-Content -Path $LibSignalFile -Value $payload -NoNewline
+    } catch {}
+}
+
+# True when $Cwd is inside $Folder (handles trailing separator equivalence).
+function Test-CwdInsideFolder([string]$Cwd, [string]$Folder) {
+    if (-not $Cwd -or -not $Folder) { return $false }
+    if ($Cwd -eq $Folder) { return $true }
+    $sep = [IO.Path]::DirectorySeparatorChar
+    if (-not $Folder.EndsWith($sep)) { $Folder = $Folder + $sep }
+    return $Cwd.StartsWith($Folder)
+}
+
+# True if any live extension window owns this cwd. Backwards-compat: empty
+# marker file means a pre-cwd-routing extension is running — defer to it.
+function Test-ExtensionOwnsCwd([string]$Cwd) {
+    if (-not (Test-Path $LibActiveDir)) { return $false }
+    foreach ($f in Get-ChildItem -Path $LibActiveDir -File -ErrorAction SilentlyContinue) {
+        $pidVal = 0
+        if (-not [int]::TryParse($f.Name, [ref]$pidVal)) { continue }
+        if (-not (Get-Process -Id $pidVal -ErrorAction SilentlyContinue)) { continue }
+        $folders = ""
+        try { $folders = [IO.File]::ReadAllText($f.FullName) } catch {}
+        if (-not $folders.Trim()) { return $true }
+        foreach ($line in $folders -split "`n") {
+            $folder = $line.Trim()
+            if ($folder -and (Test-CwdInsideFolder $Cwd $folder)) { return $true }
+        }
+    }
+    return $false
+}

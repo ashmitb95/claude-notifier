@@ -1,25 +1,13 @@
 #!/usr/bin/env node
-// Claude Notifier — Notification hook script
-// Plays the "needs input" sound when Claude needs permission.
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
-
-const HOOKS_DIR = path.join(process.env.HOME || process.env.USERPROFILE || "~", ".claude", "hooks");
-const MUTE_FLAG = path.join(HOOKS_DIR, "claude-notifier-muted");
-const IS_WIN = process.platform === "win32";
-const IS_WSL = !IS_WIN && process.platform === "linux" && (() => {
-  try { return fs.readFileSync("/proc/version", "utf-8").toLowerCase().includes("microsoft"); } catch { return false; }
-})();
-const USE_WIN = IS_WIN || IS_WSL;
-const PS_BIN = IS_WSL ? "powershell.exe" : "powershell";
-const IS_LINUX = !IS_WIN && !IS_WSL && process.platform === "linux";
-
-const SOUND = USE_WIN
-  ? "C:\\Windows\\Media\\Windows Notify.wav"
-  : IS_LINUX
-  ? "/usr/share/sounds/freedesktop/stereo/bell.oga"
-  : "/System/Library/Sounds/Glass.aiff";
+// Claude Notifier — Notification hook (v2)
+// Plays the "needs input" sound when Claude posts a permission_prompt
+// notification. Uses fixed sound (not config-driven) — this hook fires
+// before the PermissionRequest hook can react.
+const { isMuted } = require("./_lib/config");
+const { resolveSound } = require("./_lib/sounds");
+const { playSound } = require("./_lib/play");
+const { showNotification } = require("./_lib/notify");
+const { writeSignal } = require("./_lib/signal");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -29,39 +17,17 @@ process.stdin.on("end", () => {
   try { input = JSON.parse(raw); } catch { process.exit(0); }
 
   if (input.notification_type !== "permission_prompt") process.exit(0);
-  if (fs.existsSync(MUTE_FLAG)) process.exit(0);
+  if (isMuted()) process.exit(0);
 
-  // Play sound
-  try {
-    if (USE_WIN) {
-      const ps = `$s='${SOUND}'; if(Test-Path $s){(New-Object Media.SoundPlayer $s).PlaySync()}else{[console]::Beep(800,300)}`;
-      execSync(`${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`, { stdio: "ignore", timeout: 5000 });
-    } else if (IS_LINUX) {
-      execSync(`paplay "${SOUND}" 2>/dev/null || aplay "${SOUND}" 2>/dev/null`, { stdio: "ignore", timeout: 5000 });
-    } else {
-      execSync(`afplay "${SOUND}"`, { stdio: "ignore" });
-    }
-  } catch {}
+  // Fixed sound mapping (Glass on macOS, Notify on Windows, freedesktop bell
+  // on Linux — resolveSound's table happens to map "Glass" to all three).
+  const sound = resolveSound("Glass", "/System/Library/Sounds/Glass.aiff", "C:\\Windows\\Media\\Windows Notify.wav");
+  playSound(sound);
 
-  // OS notification
-  try {
-    const message = input.message || "Claude needs your permission.";
-    if (USE_WIN) {
-      const safeMsg = message.replace(/'/g, "''");
-      const ps = `Add-Type -AssemblyName System.Windows.Forms; $n=New-Object System.Windows.Forms.NotifyIcon; $n.Icon=[System.Drawing.SystemIcons]::Information; $n.Visible=$true; $n.ShowBalloonTip(3000,'Claude Notifier','${safeMsg}',[System.Windows.Forms.ToolTipIcon]::None); Start-Sleep -m 500; $n.Dispose()`;
-      execSync(`${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`, { stdio: "ignore", timeout: 5000 });
-    } else if (IS_LINUX) {
-      const safeMsg = message.replace(/"/g, '\\"');
-      execSync(`notify-send "Claude Notifier" "${safeMsg}" 2>/dev/null`, { stdio: "ignore", timeout: 5000 });
-    } else {
-      execSync(`osascript -e 'display notification "${message}" with title "Claude Notifier"'`, { stdio: "ignore" });
-    }
-  } catch {}
+  const message = input.message || "Claude needs your permission.";
+  showNotification(message);
 
-  // Write signal for VSCode extension
-  try {
-    fs.writeFileSync(path.join(HOOKS_DIR, "claude-signal"), "input " + Date.now());
-  } catch {}
+  writeSignal("input");
 
   process.exit(0);
 });

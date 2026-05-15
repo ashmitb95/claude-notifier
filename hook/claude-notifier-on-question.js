@@ -1,63 +1,11 @@
 #!/usr/bin/env node
-// Claude Notifier — PreToolUse hook for AskUserQuestion (v2)
-// Plays a sound when Claude asks the user a question.
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
-
-const HOOKS_DIR = path.join(process.env.HOME || process.env.USERPROFILE || "~", ".claude", "hooks");
-const MUTE_FLAG = path.join(HOOKS_DIR, "claude-notifier-muted");
-const IS_WIN = process.platform === "win32";
-const IS_WSL = !IS_WIN && process.platform === "linux" && (() => {
-  try { return fs.readFileSync("/proc/version", "utf-8").toLowerCase().includes("microsoft"); } catch { return false; }
-})();
-const USE_WIN = IS_WIN || IS_WSL;
-const PS_BIN = IS_WSL ? "powershell.exe" : "powershell";
-const IS_LINUX = !IS_WIN && !IS_WSL && process.platform === "linux";
-
-const MACOS_SOUNDS = {
-  Basso: "/System/Library/Sounds/Basso.aiff", Blow: "/System/Library/Sounds/Blow.aiff",
-  Bottle: "/System/Library/Sounds/Bottle.aiff", Frog: "/System/Library/Sounds/Frog.aiff",
-  Funk: "/System/Library/Sounds/Funk.aiff", Glass: "/System/Library/Sounds/Glass.aiff",
-  Hero: "/System/Library/Sounds/Hero.aiff", Morse: "/System/Library/Sounds/Morse.aiff",
-  Ping: "/System/Library/Sounds/Ping.aiff", Pop: "/System/Library/Sounds/Pop.aiff",
-  Purr: "/System/Library/Sounds/Purr.aiff", Sosumi: "/System/Library/Sounds/Sosumi.aiff",
-  Submarine: "/System/Library/Sounds/Submarine.aiff", Tink: "/System/Library/Sounds/Tink.aiff",
-};
-const WIN_SOUNDS = {
-  "Windows Notify": "C:\\Windows\\Media\\Windows Notify.wav", "tada": "C:\\Windows\\Media\\tada.wav",
-  "chimes": "C:\\Windows\\Media\\chimes.wav", "chord": "C:\\Windows\\Media\\chord.wav",
-  "ding": "C:\\Windows\\Media\\ding.wav", "notify": "C:\\Windows\\Media\\notify.wav",
-  "ringin": "C:\\Windows\\Media\\ringin.wav", "Windows Background": "C:\\Windows\\Media\\Windows Background.wav",
-};
-const LINUX_SOUNDS_DIR = "/usr/share/sounds/freedesktop/stereo";
-const LINUX_SOUNDS = {
-  Basso:     `${LINUX_SOUNDS_DIR}/dialog-warning.oga`,
-  Blow:      `${LINUX_SOUNDS_DIR}/service-logout.oga`,
-  Bottle:    `${LINUX_SOUNDS_DIR}/bell.oga`,
-  Frog:      `${LINUX_SOUNDS_DIR}/message-new-instant.oga`,
-  Funk:      `${LINUX_SOUNDS_DIR}/message-new-instant.oga`,
-  Glass:     `${LINUX_SOUNDS_DIR}/bell.oga`,
-  Hero:      `${LINUX_SOUNDS_DIR}/complete.oga`,
-  Morse:     `${LINUX_SOUNDS_DIR}/message.oga`,
-  Ping:      `${LINUX_SOUNDS_DIR}/message.oga`,
-  Pop:       `${LINUX_SOUNDS_DIR}/dialog-information.oga`,
-  Purr:      `${LINUX_SOUNDS_DIR}/service-login.oga`,
-  Sosumi:    `${LINUX_SOUNDS_DIR}/dialog-warning.oga`,
-  Submarine: `${LINUX_SOUNDS_DIR}/alarm-clock-elapsed.oga`,
-  Tink:      `${LINUX_SOUNDS_DIR}/bell.oga`,
-};
-
-function resolveSound(name, defaultMac, defaultWin) {
-  if (USE_WIN) return WIN_SOUNDS[name] || defaultWin;
-  if (IS_LINUX) return LINUX_SOUNDS[name] || `${LINUX_SOUNDS_DIR}/complete.oga`;
-  return MACOS_SOUNDS[name] || defaultMac;
-}
-
-function readConfig() {
-  try { return JSON.parse(fs.readFileSync(path.join(HOOKS_DIR, "claude-notifier-config.json"), "utf-8")); }
-  catch { return null; }
-}
+// Claude Notifier — PreToolUse hook for AskUserQuestion (v3)
+// Plays a sound + shows a notification when Claude asks the user a question.
+const { isMuted, readConfig } = require("./_lib/config");
+const { resolveSound } = require("./_lib/sounds");
+const { playSound } = require("./_lib/play");
+const { showNotification } = require("./_lib/notify");
+const { writeSignal } = require("./_lib/signal");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -69,48 +17,23 @@ process.stdin.on("end", () => {
   // Defense-in-depth: bail if a misconfigured matcher routes other tools here.
   if (input.tool_name !== "AskUserQuestion") process.exit(0);
 
-  if (fs.existsSync(MUTE_FLAG)) process.exit(0);
+  if (isMuted()) process.exit(0);
 
-  const config = readConfig();
-  const eventCfg = config?.asksQuestion ?? {};
-  const level = eventCfg.level ?? "sound+popup";
+  const cfg = readConfig()?.asksQuestion ?? {};
+  const level = cfg.level ?? "sound+popup";
 
   if (level === "off") process.exit(0);
 
-  const sound = resolveSound(eventCfg.sound, "/System/Library/Sounds/Funk.aiff", "C:\\Windows\\Media\\Windows Notify.wav");
-
-  // Play sound
   if (level === "sound+popup" || level === "sound") {
-    try {
-      if (USE_WIN) {
-        const ps = `$s='${sound}'; if(Test-Path $s){(New-Object Media.SoundPlayer $s).PlaySync()}else{[console]::Beep(800,300)}`;
-        execSync(`${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`, { stdio: "ignore", timeout: 5000 });
-      } else if (IS_LINUX) {
-        execSync(`paplay "${sound}" 2>/dev/null || aplay "${sound}" 2>/dev/null`, { stdio: "ignore", timeout: 5000 });
-      } else {
-        execSync(`afplay "${sound}"`, { stdio: "ignore" });
-      }
-    } catch {}
+    const sound = resolveSound(cfg.sound, "/System/Library/Sounds/Funk.aiff", "C:\\Windows\\Media\\Windows Notify.wav");
+    playSound(sound);
   }
 
-  // OS notification
   if (level === "sound+popup" || level === "popup") {
-    try {
-      if (USE_WIN) {
-        const ps = `Add-Type -AssemblyName System.Windows.Forms; $n=New-Object System.Windows.Forms.NotifyIcon; $n.Icon=[System.Drawing.SystemIcons]::Information; $n.Visible=$true; $n.ShowBalloonTip(3000,'Claude Notifier','Claude is asking you a question.',[System.Windows.Forms.ToolTipIcon]::None); Start-Sleep -m 500; $n.Dispose()`;
-        execSync(`${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`, { stdio: "ignore", timeout: 5000 });
-      } else if (IS_LINUX) {
-        execSync(`notify-send "Claude Notifier" "Claude is asking you a question." 2>/dev/null`, { stdio: "ignore", timeout: 5000 });
-      } else {
-        execSync(`osascript -e 'display notification "Claude is asking you a question." with title "Claude Notifier"'`, { stdio: "ignore" });
-      }
-    } catch {}
+    showNotification("Claude is asking you a question.");
   }
 
-  // Write signal for VSCode extension
-  try {
-    fs.writeFileSync(path.join(HOOKS_DIR, "claude-signal"), "question " + Date.now());
-  } catch {}
+  writeSignal("question");
 
   process.exit(0);
 });

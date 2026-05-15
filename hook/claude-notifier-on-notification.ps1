@@ -1,37 +1,20 @@
-# Claude Notifier - Notification hook (PowerShell)
-# Plays sound when Claude sends a notification.
+# Claude Notifier - Notification hook (PowerShell, v2)
+# Plays sound + shows notification on permission_prompt notifications.
+# Uses fixed sound (not config-driven).
 $ErrorActionPreference = 'SilentlyContinue'
-
-$hooksDir = $PSScriptRoot
-$muteFlag = Join-Path $hooksDir 'claude-notifier-muted'
+. (Join-Path $PSScriptRoot '_lib.ps1')
 
 $raw = [Console]::In.ReadToEnd()
 try { $data = $raw | ConvertFrom-Json } catch { exit 0 }
 
 if ($data.notification_type -ne 'permission_prompt') { exit 0 }
-if (Test-Path $muteFlag) { exit 0 }
+if (Test-NotifierMuted) { exit 0 }
 
-$sound = 'C:\Windows\Media\Windows Notify.wav'
+Invoke-NotifierSound -Path 'C:\Windows\Media\Windows Notify.wav'
 
-# Play sound
-try {
-    if (Test-Path $sound) { (New-Object Media.SoundPlayer $sound).PlaySync() }
-    else { [console]::Beep(800, 300) }
-} catch {}
+$message = if ($data.message) { $data.message } else { 'Claude needs your permission.' }
+Show-NotifierNotification -Message $message
 
-# OS notification
-try {
-    $message = if ($data.message) { $data.message } else { 'Claude needs your permission.' }
-    Add-Type -AssemblyName System.Windows.Forms
-    $n = New-Object System.Windows.Forms.NotifyIcon
-    $n.Icon = [System.Drawing.SystemIcons]::Information
-    $n.Visible = $true
-    $n.ShowBalloonTip(3000, 'Claude Notifier', $message, [System.Windows.Forms.ToolTipIcon]::None)
-    Start-Sleep -Milliseconds 500
-    $n.Dispose()
-} catch {}
+Write-NotifierSignal -Reason 'input'
 
-# Write signal for VSCode extension
-try {
-    Set-Content -Path (Join-Path $hooksDir 'claude-signal') -Value "input $(Get-Date -UFormat %s)" -NoNewline
-} catch {}
+exit 0

@@ -18,11 +18,16 @@ REPO_RAW="https://raw.githubusercontent.com/ashmitb95/claude-notifier/main"
 
 echo "Installing Claude Notifier..."
 
-mkdir -p "$HOOKS_DIR"
+mkdir -p "$HOOKS_DIR" "$HOOKS_DIR/_lib"
 
 for script in claude-notifier-on-stop.js claude-notifier-on-permission.js claude-notifier-on-question.js; do
   curl -fsSL "$REPO_RAW/hook/$script" -o "$HOOKS_DIR/$script"
   chmod +x "$HOOKS_DIR/$script"
+done
+
+# Shared hook library (required by the hook scripts since v3.0)
+for lib in platform.js paths.js sounds.js config.js play.js notify.js signal.js active.js; do
+  curl -fsSL "$REPO_RAW/hook/_lib/$lib" -o "$HOOKS_DIR/_lib/$lib"
 done
 
 if [ ! -f "$SETTINGS_FILE" ]; then

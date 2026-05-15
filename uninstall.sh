@@ -15,6 +15,8 @@ echo "Uninstalling Claude Notifier..."
 rm -f "$HOOKS_DIR"/claude-notifier-on-*.js
 rm -f "$HOOKS_DIR/claude-notifier-muted"
 rm -f "$HOOKS_DIR/claude-signal"
+rm -f "$HOOKS_DIR/claude-notifier-config.json"
+rm -rf "$HOOKS_DIR/_lib"
 
 if [ -f "$SETTINGS_FILE" ]; then
   node -e "
