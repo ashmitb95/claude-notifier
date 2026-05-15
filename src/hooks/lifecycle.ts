@@ -20,6 +20,11 @@ const HOOK_RUNNER_PREFIX = IS_WIN ? "powershell" : "node";
 export function setupHooks(extensionPath: string): void {
   fs.mkdirSync(HOOKS_DIR, { recursive: true });
 
+  // Copy shared hook library FIRST so the newly-slim hook scripts never run
+  // without their `_lib/` available. On macOS/Linux/WSL the hook scripts
+  // `require("./_lib/*.js")`; on Windows they `. _lib.ps1`. Bundled by .vsix.
+  copyHookLib(extensionPath);
+
   // Copy bundled hook scripts (only if changed)
   for (const hook of HOOKS) {
     const src = path.join(extensionPath, "hook", `${hook.baseName}${IS_WIN ? ".ps1" : ".js"}`);
@@ -67,6 +72,32 @@ export function setupHooks(extensionPath: string): void {
   writeSettings(settings);
 }
 
+function copyHookLib(extensionPath: string): void {
+  if (IS_WIN) {
+    syncFile(
+      path.join(extensionPath, "hook", "_lib.ps1"),
+      path.join(HOOKS_DIR, "_lib.ps1")
+    );
+    return;
+  }
+  const libSrcDir = path.join(extensionPath, "hook", "_lib");
+  const libDestDir = path.join(HOOKS_DIR, "_lib");
+  fs.mkdirSync(libDestDir, { recursive: true });
+  for (const entry of fs.readdirSync(libSrcDir)) {
+    if (!entry.endsWith(".js")) continue;
+    syncFile(path.join(libSrcDir, entry), path.join(libDestDir, entry));
+  }
+}
+
+function syncFile(src: string, dest: string): void {
+  const srcContent = fs.readFileSync(src, "utf-8");
+  let destContent = "";
+  try { destContent = fs.readFileSync(dest, "utf-8"); } catch {}
+  if (srcContent !== destContent) {
+    fs.writeFileSync(dest, srcContent);
+  }
+}
+
 /**
  * Full uninstall: remove hook files (including legacy/cross-platform
  * variants), state files, PID-marker directory, legacy shim artifacts, and
@@ -103,6 +134,16 @@ export function teardownHooks(): void {
       try { fs.unlinkSync(path.join(ACTIVE_DIR, name)); } catch {}
     }
     fs.rmdirSync(ACTIVE_DIR);
+  } catch {}
+
+  // Shared hook library: _lib/*.js (mac/linux/wsl) and _lib.ps1 (win)
+  try { fs.unlinkSync(path.join(HOOKS_DIR, "_lib.ps1")); } catch {}
+  try {
+    const libDir = path.join(HOOKS_DIR, "_lib");
+    for (const entry of fs.readdirSync(libDir)) {
+      try { fs.unlinkSync(path.join(libDir, entry)); } catch {}
+    }
+    fs.rmdirSync(libDir);
   } catch {}
 
   // Older versions shipped a generated AppleScript shim — remove if present.
