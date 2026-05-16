@@ -12,8 +12,12 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -31,7 +35,12 @@
       "properties": {
         "claudeNotifier.taskCompleted.level": {
           "type": "string",
-          "enum": ["sound+popup", "sound", "popup", "off"],
+          "enum": [
+            "sound+popup",
+            "sound",
+            "popup",
+            "off"
+          ],
           "enumDescriptions": [
             "Play sound and show notification",
             "Play sound only",
@@ -43,13 +52,41 @@
         },
         "claudeNotifier.taskCompleted.sound": {
           "type": "string",
-          "enum": ["Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr", "Sosumi", "Submarine", "Tink", "Windows Notify", "tada", "chimes", "chord", "ding", "notify", "ringin", "Windows Background"],
+          "enum": [
+            "Basso",
+            "Blow",
+            "Bottle",
+            "Frog",
+            "Funk",
+            "Glass",
+            "Hero",
+            "Morse",
+            "Ping",
+            "Pop",
+            "Purr",
+            "Sosumi",
+            "Submarine",
+            "Tink",
+            "Windows Notify",
+            "tada",
+            "chimes",
+            "chord",
+            "ding",
+            "notify",
+            "ringin",
+            "Windows Background"
+          ],
           "default": "Hero",
           "description": "Sound preset when Claude finishes a task. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
         "claudeNotifier.needsPermission.level": {
           "type": "string",
-          "enum": ["sound+popup", "sound", "popup", "off"],
+          "enum": [
+            "sound+popup",
+            "sound",
+            "popup",
+            "off"
+          ],
           "enumDescriptions": [
             "Play sound and show notification",
             "Play sound only",
@@ -61,13 +98,41 @@
         },
         "claudeNotifier.needsPermission.sound": {
           "type": "string",
-          "enum": ["Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr", "Sosumi", "Submarine", "Tink", "Windows Notify", "tada", "chimes", "chord", "ding", "notify", "ringin", "Windows Background"],
+          "enum": [
+            "Basso",
+            "Blow",
+            "Bottle",
+            "Frog",
+            "Funk",
+            "Glass",
+            "Hero",
+            "Morse",
+            "Ping",
+            "Pop",
+            "Purr",
+            "Sosumi",
+            "Submarine",
+            "Tink",
+            "Windows Notify",
+            "tada",
+            "chimes",
+            "chord",
+            "ding",
+            "notify",
+            "ringin",
+            "Windows Background"
+          ],
           "default": "Glass",
           "description": "Sound preset when Claude needs permission. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
         "claudeNotifier.asksQuestion.level": {
           "type": "string",
-          "enum": ["sound+popup", "sound", "popup", "off"],
+          "enum": [
+            "sound+popup",
+            "sound",
+            "popup",
+            "off"
+          ],
           "enumDescriptions": [
             "Play sound and show notification",
             "Play sound only",
@@ -79,7 +144,30 @@
         },
         "claudeNotifier.asksQuestion.sound": {
           "type": "string",
-          "enum": ["Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero", "Morse", "Ping", "Pop", "Purr", "Sosumi", "Submarine", "Tink", "Windows Notify", "tada", "chimes", "chord", "ding", "notify", "ringin", "Windows Background"],
+          "enum": [
+            "Basso",
+            "Blow",
+            "Bottle",
+            "Frog",
+            "Funk",
+            "Glass",
+            "Hero",
+            "Morse",
+            "Ping",
+            "Pop",
+            "Purr",
+            "Sosumi",
+            "Submarine",
+            "Tink",
+            "Windows Notify",
+            "tada",
+            "chimes",
+            "chord",
+            "ding",
+            "notify",
+            "ringin",
+            "Windows Background"
+          ],
           "default": "Funk",
           "description": "Sound preset when Claude asks a question. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
@@ -99,11 +187,17 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "npx @vscode/vsce package",
-    "vscode:uninstall": "node ./out/uninstall.js"
+    "vscode:uninstall": "node ./out/uninstall.js",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.3.0"
+    "@types/vscode": "^1.85.0",
+    "@vitest/coverage-v8": "^4.1.6",
+    "typescript": "^5.3.0",
+    "vitest": "^4.1.6"
   }
 }
