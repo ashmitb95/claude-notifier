@@ -125,7 +125,11 @@ function showNotification(reason: string): void {
         playRemoteSound();
       } else {
         const cfg = getEventConfig("taskCompleted");
-        playLocalSound(cfg.sound, "/System/Library/Sounds/Hero.aiff", "C:\\Windows\\Media\\tada.wav");
+        playLocalSound(
+          cfg.sound,
+          "/System/Library/Sounds/Hero.aiff",
+          "C:\\Windows\\Media\\tada.wav"
+        );
       }
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {

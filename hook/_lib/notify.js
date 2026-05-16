@@ -17,7 +17,10 @@ function appleScriptEscape(s) {
 function findTerminalNotifier() {
   if (!IS_MAC) return null;
   for (const c of ["/opt/homebrew/bin/terminal-notifier", "/usr/local/bin/terminal-notifier"]) {
-    try { fs.accessSync(c, fs.constants.X_OK); return c; } catch {}
+    try {
+      fs.accessSync(c, fs.constants.X_OK);
+      return c;
+    } catch {}
   }
   try {
     const out = execFileSync("/usr/bin/which", ["terminal-notifier"], { encoding: "utf-8" }).trim();
@@ -41,10 +44,16 @@ function showNotification(message, opts = {}) {
       const safeMsg = psSingleQuoteEscape(message);
       const safeTitle = psSingleQuoteEscape(TITLE);
       const ps = `Add-Type -AssemblyName System.Windows.Forms; $n=New-Object System.Windows.Forms.NotifyIcon; $n.Icon=[System.Drawing.SystemIcons]::Information; $n.Visible=$true; $n.ShowBalloonTip(3000,'${safeTitle}','${safeMsg}',[System.Windows.Forms.ToolTipIcon]::None); Start-Sleep -m 500; $n.Dispose()`;
-      execSync(`${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`, { stdio: "ignore", timeout: 5000 });
+      execSync(
+        `${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`,
+        { stdio: "ignore", timeout: 5000 }
+      );
     } else if (IS_LINUX) {
       // execFileSync bypasses the shell — no shell-escaping concerns for $ or `.
-      execFileSync("notify-send", ["--app-name=Claude Code", TITLE, String(message)], { stdio: "ignore", timeout: 5000 });
+      execFileSync("notify-send", ["--app-name=Claude Code", TITLE, String(message)], {
+        stdio: "ignore",
+        timeout: 5000,
+      });
     } else if (IS_MAC) {
       if (preferTn) {
         const tn = findTerminalNotifier();
@@ -55,7 +64,9 @@ function showNotification(message, opts = {}) {
       }
       // execFileSync bypasses the shell; AppleScript still needs its own \ and " escaping.
       const escaped = appleScriptEscape(message);
-      execFileSync("osascript", ["-e", `display notification "${escaped}" with title "${TITLE}"`], { stdio: "ignore" });
+      execFileSync("osascript", ["-e", `display notification "${escaped}" with title "${TITLE}"`], {
+        stdio: "ignore",
+      });
     }
   } catch {}
 }

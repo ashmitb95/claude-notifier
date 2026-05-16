@@ -28,15 +28,16 @@ export function activate(context: vscode.ExtensionContext) {
   } catch {}
 
   // Workspace folder set can change at runtime — keep PID file fresh.
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => writeOwnPidFile())
-  );
+  context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => writeOwnPidFile()));
 
   createStatusBar(context);
 
   context.subscriptions.push(
     vscode.commands.registerCommand("claudeNotifier.toggleSound", toggleSound),
-    vscode.commands.registerCommand("claudeNotifier.installTerminalNotifier", installTerminalNotifierFlow),
+    vscode.commands.registerCommand(
+      "claudeNotifier.installTerminalNotifier",
+      installTerminalNotifierFlow
+    ),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("claudeNotifier")) {
         syncConfig();
@@ -51,5 +52,7 @@ export function deactivate() {
   // entries in place so Claude Code outside VS Code (terminal, desktop app)
   // still gets sound + notification via the hook's terminal-fallback path.
   // Full teardown happens on extension uninstall via uninstall.ts.
-  try { fs.unlinkSync(OWN_PID_FILE); } catch {}
+  try {
+    fs.unlinkSync(OWN_PID_FILE);
+  } catch {}
 }

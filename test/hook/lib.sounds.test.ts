@@ -28,19 +28,27 @@ describe("hook/_lib/sounds — resolveSound (active platform)", () => {
   it("unknown preset falls back to the platform-appropriate default", () => {
     const r = resolveSound("Nonexistent_Preset", "/mac-default", "C:\\win-default");
     // macOS → defaultMac; Linux → complete.oga; Windows → defaultWin.
-    expect([
-      "/mac-default",
-      "C:\\win-default",
-      `${LINUX_SOUNDS_DIR}/complete.oga`,
-    ]).toContain(r);
+    expect(["/mac-default", "C:\\win-default", `${LINUX_SOUNDS_DIR}/complete.oga`]).toContain(r);
   });
 });
 
 describe("hook/_lib/sounds — cross-platform tables", () => {
   it("MACOS_SOUNDS covers the 14-preset enum", () => {
     expect(Object.keys(MACOS_SOUNDS).sort()).toEqual([
-      "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero",
-      "Morse", "Ping", "Pop", "Purr", "Sosumi", "Submarine", "Tink",
+      "Basso",
+      "Blow",
+      "Bottle",
+      "Frog",
+      "Funk",
+      "Glass",
+      "Hero",
+      "Morse",
+      "Ping",
+      "Pop",
+      "Purr",
+      "Sosumi",
+      "Submarine",
+      "Tink",
     ]);
     for (const v of Object.values(MACOS_SOUNDS)) {
       expect(v).toMatch(/^\/System\/Library\/Sounds\/.+\.aiff$/);
@@ -49,8 +57,14 @@ describe("hook/_lib/sounds — cross-platform tables", () => {
 
   it("WIN_SOUNDS covers the 8 Windows presets", () => {
     expect(Object.keys(WIN_SOUNDS).sort()).toEqual([
-      "Windows Background", "Windows Notify", "chimes", "chord", "ding",
-      "notify", "ringin", "tada",
+      "Windows Background",
+      "Windows Notify",
+      "chimes",
+      "chord",
+      "ding",
+      "notify",
+      "ringin",
+      "tada",
     ]);
     for (const v of Object.values(WIN_SOUNDS)) {
       expect(v).toMatch(/^C:\\Windows\\Media\\.+\.wav$/);

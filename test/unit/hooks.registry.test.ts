@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  HOOKS,
-  hookFileName,
-  hookDestPath,
-  ALL_HOOK_TYPES,
-} from "../../src/hooks/registry";
+import { HOOKS, hookFileName, hookDestPath, ALL_HOOK_TYPES } from "../../src/hooks/registry";
 import { HOOK_EXT, HOOKS_DIR } from "../../src/paths";
 
 describe("HOOKS registry", () => {

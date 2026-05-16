@@ -19,19 +19,21 @@ beforeAll(() => {
   process.env.HOME = HOME_DIR;
 });
 beforeEach(() => {
-  try { fs.unlinkSync(SIGNAL_FILE); } catch {}
+  try {
+    fs.unlinkSync(SIGNAL_FILE);
+  } catch {}
 });
 afterAll(() => {
   process.env.HOME = ORIG_HOME;
-  try { fs.rmSync(HOME_DIR, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(HOME_DIR, { recursive: true, force: true });
+  } catch {}
 });
 
 describe("hook/_lib/signal — writeSignal", () => {
   it("v2 format with session id and cwd", () => {
     signal.writeSignal("done", "abc-123", "/Users/foo/proj");
-    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(
-      /^done \d+ abc-123 \/Users\/foo\/proj$/
-    );
+    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(/^done \d+ abc-123 \/Users\/foo\/proj$/);
   });
 
   it("v2 format without cwd", () => {

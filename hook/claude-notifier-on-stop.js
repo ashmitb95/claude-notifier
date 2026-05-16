@@ -15,7 +15,11 @@ process.stdin.setEncoding("utf-8");
 process.stdin.on("data", (chunk) => (raw += chunk));
 process.stdin.on("end", () => {
   let input = {};
-  try { input = JSON.parse(raw); } catch { process.exit(0); }
+  try {
+    input = JSON.parse(raw);
+  } catch {
+    process.exit(0);
+  }
 
   if (input.stop_hook_active) process.exit(0);
   if (isMuted()) process.exit(0);
@@ -34,7 +38,11 @@ process.stdin.on("end", () => {
   if (level === "off") process.exit(0);
 
   if (level === "sound+popup" || level === "sound") {
-    const sound = resolveSound(cfg.sound, "/System/Library/Sounds/Hero.aiff", "C:\\Windows\\Media\\tada.wav");
+    const sound = resolveSound(
+      cfg.sound,
+      "/System/Library/Sounds/Hero.aiff",
+      "C:\\Windows\\Media\\tada.wav"
+    );
     playSound(sound, BUNDLED_FALLBACK.taskCompleted);
   }
 

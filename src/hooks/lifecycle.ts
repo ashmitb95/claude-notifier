@@ -1,8 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import {
-  HOOKS_DIR, SIGNAL_FILE, MUTE_FLAG, CONFIG_FILE, ACTIVE_DIR, IS_WIN,
-} from "../paths";
+import { HOOKS_DIR, SIGNAL_FILE, MUTE_FLAG, CONFIG_FILE, ACTIVE_DIR, IS_WIN } from "../paths";
 import { HOOKS, hookDestPath } from "./registry";
 import { hookCmd } from "./cmd";
 import { readSettings, writeSettings, stripClaudeNotifierHooks } from "../settings/claude";
@@ -31,7 +29,9 @@ export function setupHooks(extensionPath: string): void {
     const dest = hookDestPath(hook);
     const srcContent = fs.readFileSync(src, "utf-8");
     let destContent = "";
-    try { destContent = fs.readFileSync(dest, "utf-8"); } catch {}
+    try {
+      destContent = fs.readFileSync(dest, "utf-8");
+    } catch {}
     if (srcContent !== destContent) {
       fs.writeFileSync(dest, srcContent, { mode: 0o755 });
     }
@@ -40,9 +40,12 @@ export function setupHooks(extensionPath: string): void {
   // Check if our hooks are already configured with the right runner — skip if so
   const settings = readSettings();
   const hasHook = (type: string, needle: string, matcher?: string) =>
-    settings.hooks?.[type]?.some((entry: any) =>
-      (matcher === undefined || entry.matcher === matcher) &&
-      entry.hooks?.some((h: any) => h.command?.includes(needle) && h.command?.startsWith(HOOK_RUNNER_PREFIX))
+    settings.hooks?.[type]?.some(
+      (entry: any) =>
+        (matcher === undefined || entry.matcher === matcher) &&
+        entry.hooks?.some(
+          (h: any) => h.command?.includes(needle) && h.command?.startsWith(HOOK_RUNNER_PREFIX)
+        )
     );
 
   const allConfigured = HOOKS.every((hook) => hasHook(hook.type, hook.baseName, hook.matcher));
@@ -78,10 +81,7 @@ function copyHookLib(extensionPath: string): void {
   copyBundledSounds(extensionPath);
 
   if (IS_WIN) {
-    syncFile(
-      path.join(extensionPath, "hook", "_lib.ps1"),
-      path.join(HOOKS_DIR, "_lib.ps1")
-    );
+    syncFile(path.join(extensionPath, "hook", "_lib.ps1"), path.join(HOOKS_DIR, "_lib.ps1"));
     return;
   }
   const libSrcDir = path.join(extensionPath, "hook", "_lib");
@@ -98,7 +98,11 @@ function copyBundledSounds(extensionPath: string): void {
   const destDir = path.join(HOOKS_DIR, "_lib", "sounds");
   fs.mkdirSync(destDir, { recursive: true });
   let entries: string[] = [];
-  try { entries = fs.readdirSync(srcDir); } catch { return; }
+  try {
+    entries = fs.readdirSync(srcDir);
+  } catch {
+    return;
+  }
   for (const entry of entries) {
     if (!entry.endsWith(".wav")) continue;
     syncBinaryFile(path.join(srcDir, entry), path.join(destDir, entry));
@@ -110,7 +114,9 @@ function syncBinaryFile(src: string, dest: string): void {
   // Compares byte-for-byte to avoid rewriting unchanged WAVs.
   const srcContent = fs.readFileSync(src);
   let destContent: Buffer | null = null;
-  try { destContent = fs.readFileSync(dest); } catch {}
+  try {
+    destContent = fs.readFileSync(dest);
+  } catch {}
   if (!destContent || !srcContent.equals(destContent)) {
     fs.writeFileSync(dest, srcContent);
   }
@@ -119,7 +125,9 @@ function syncBinaryFile(src: string, dest: string): void {
 function syncFile(src: string, dest: string): void {
   const srcContent = fs.readFileSync(src, "utf-8");
   let destContent = "";
-  try { destContent = fs.readFileSync(dest, "utf-8"); } catch {}
+  try {
+    destContent = fs.readFileSync(dest, "utf-8");
+  } catch {}
   if (srcContent !== destContent) {
     fs.writeFileSync(dest, srcContent);
   }
@@ -153,24 +161,34 @@ export function teardownHooks(): void {
   ];
 
   for (const file of filesToRemove) {
-    try { fs.unlinkSync(file); } catch {}
+    try {
+      fs.unlinkSync(file);
+    } catch {}
   }
 
   // Per-PID active markers directory
   try {
     for (const name of fs.readdirSync(ACTIVE_DIR)) {
-      try { fs.unlinkSync(path.join(ACTIVE_DIR, name)); } catch {}
+      try {
+        fs.unlinkSync(path.join(ACTIVE_DIR, name));
+      } catch {}
     }
     fs.rmdirSync(ACTIVE_DIR);
   } catch {}
 
   // Shared hook library: _lib/*.js + _lib/sounds/*.wav (mac/linux/wsl) and
   // _lib.ps1 (win). Recursive remove handles the nested sounds/ directory.
-  try { fs.unlinkSync(path.join(HOOKS_DIR, "_lib.ps1")); } catch {}
-  try { fs.rmSync(path.join(HOOKS_DIR, "_lib"), { recursive: true, force: true }); } catch {}
+  try {
+    fs.unlinkSync(path.join(HOOKS_DIR, "_lib.ps1"));
+  } catch {}
+  try {
+    fs.rmSync(path.join(HOOKS_DIR, "_lib"), { recursive: true, force: true });
+  } catch {}
 
   // Older versions shipped a generated AppleScript shim — remove if present.
-  try { fs.rmSync(path.join(HOOKS_DIR, "ClaudeNotifier.app"), { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(path.join(HOOKS_DIR, "ClaudeNotifier.app"), { recursive: true, force: true });
+  } catch {}
 
   const settings = readSettings();
   stripClaudeNotifierHooks(settings);

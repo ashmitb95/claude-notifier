@@ -1,0 +1,10 @@
+node_modules/
+out/
+coverage/
+*.vsix
+*.wav
+package-lock.json
+
+# Prose is hand-formatted; let the author own line wrapping and structure.
+*.md
+LICENSE*

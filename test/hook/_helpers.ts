@@ -26,7 +26,9 @@ export function tmpHome() {
     configFile: path.join(hooksDir, "claude-notifier-config.json"),
     activeDir: path.join(hooksDir, "claude-notifier-active.d"),
     dispose() {
-      try { fs.rmSync(root, { recursive: true, force: true }); } catch {}
+      try {
+        fs.rmSync(root, { recursive: true, force: true });
+      } catch {}
     },
   };
 }
@@ -58,7 +60,7 @@ export function runHook(
     env: {
       ...process.env,
       HOME: home,
-      PATH: opts.keepPath ? process.env.PATH ?? "" : "/",
+      PATH: opts.keepPath ? (process.env.PATH ?? "") : "/",
       ...opts.extraEnv,
     },
     encoding: "utf-8",
@@ -74,7 +76,11 @@ export function runHook(
 
 /** Read the signal file or return "" if not present. */
 export function readSignal(signalFile: string): string {
-  try { return fs.readFileSync(signalFile, "utf-8"); } catch { return ""; }
+  try {
+    return fs.readFileSync(signalFile, "utf-8");
+  } catch {
+    return "";
+  }
 }
 
 /**

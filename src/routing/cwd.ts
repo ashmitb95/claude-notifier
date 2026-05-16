@@ -4,7 +4,12 @@ import * as vscode from "vscode";
 import { ACTIVE_DIR, OWN_PID_FILE } from "../paths";
 
 export function isPidAlive(pid: number): boolean {
-  try { process.kill(pid, 0); return true; } catch { return false; }
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getOwnWorkspaceFolders(): string[] {
@@ -29,7 +34,9 @@ export function cleanStalePidFiles(): void {
     for (const name of fs.readdirSync(ACTIVE_DIR)) {
       const pid = parseInt(name, 10);
       if (!Number.isFinite(pid) || !isPidAlive(pid)) {
-        try { fs.unlinkSync(path.join(ACTIVE_DIR, name)); } catch {}
+        try {
+          fs.unlinkSync(path.join(ACTIVE_DIR, name));
+        } catch {}
       }
     }
   } catch {}

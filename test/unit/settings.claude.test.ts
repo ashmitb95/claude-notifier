@@ -17,7 +17,9 @@ describe("stripClaudeNotifierHooks", () => {
       hooks: {
         Stop: [notifierEntry("node ~/.claude/hooks/claude-notifier-on-stop.js")],
         PermissionRequest: [notifierEntry("node ~/.claude/hooks/claude-notifier-on-permission.js")],
-        PreToolUse: [notifierEntry("node ~/.claude/hooks/claude-notifier-on-question.js", "AskUserQuestion")],
+        PreToolUse: [
+          notifierEntry("node ~/.claude/hooks/claude-notifier-on-question.js", "AskUserQuestion"),
+        ],
         Notification: [notifierEntry("node ~/.claude/hooks/claude-notifier-on-notification.js")],
         UserPromptSubmit: [notifierEntry("node ~/.claude/hooks/claude-notifier-on-prompt.js")],
       },
@@ -31,10 +33,7 @@ describe("stripClaudeNotifierHooks", () => {
   it("preserves third-party entries on the same hook type", () => {
     const settings = {
       hooks: {
-        Stop: [
-          notifierEntry("node ~/.claude/hooks/claude-notifier-on-stop.js"),
-          thirdPartyEntry(),
-        ],
+        Stop: [notifierEntry("node ~/.claude/hooks/claude-notifier-on-stop.js"), thirdPartyEntry()],
       },
     };
 
@@ -86,9 +85,7 @@ describe("stripClaudeNotifierHooks", () => {
   it("matches by command substring — any 'claude-notifier' in command is filtered", () => {
     const settings = {
       hooks: {
-        Stop: [
-          { hooks: [{ type: "command", command: "/odd/path/claude-notifier-wrapper.sh" }] },
-        ],
+        Stop: [{ hooks: [{ type: "command", command: "/odd/path/claude-notifier-wrapper.sh" }] }],
       },
     };
     stripClaudeNotifierHooks(settings);

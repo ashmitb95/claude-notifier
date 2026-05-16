@@ -19,15 +19,28 @@ function cwdInsideFolder(cwd, folder) {
  */
 function extensionOwnsCwd(cwd) {
   let entries;
-  try { entries = fs.readdirSync(ACTIVE_DIR); } catch { return false; }
+  try {
+    entries = fs.readdirSync(ACTIVE_DIR);
+  } catch {
+    return false;
+  }
   for (const name of entries) {
     const pid = parseInt(name, 10);
     if (!Number.isFinite(pid)) continue;
-    try { process.kill(pid, 0); } catch { continue; }
+    try {
+      process.kill(pid, 0);
+    } catch {
+      continue;
+    }
     let folders = "";
-    try { folders = fs.readFileSync(path.join(ACTIVE_DIR, name), "utf-8"); } catch {}
+    try {
+      folders = fs.readFileSync(path.join(ACTIVE_DIR, name), "utf-8");
+    } catch {}
     if (!folders.trim()) return true;
-    for (const folder of folders.split("\n").map((s) => s.trim()).filter(Boolean)) {
+    for (const folder of folders
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean)) {
       if (cwdInsideFolder(cwd, folder)) return true;
     }
   }

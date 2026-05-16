@@ -56,4 +56,10 @@ export function hookDestPath(hook: HookDef): string {
 }
 
 /** Hook types that may appear in settings.json (used for cleanup). */
-export const ALL_HOOK_TYPES = ["Stop", "PermissionRequest", "PreToolUse", "Notification", "UserPromptSubmit"] as const;
+export const ALL_HOOK_TYPES = [
+  "Stop",
+  "PermissionRequest",
+  "PreToolUse",
+  "Notification",
+  "UserPromptSubmit",
+] as const;

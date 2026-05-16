@@ -8,9 +8,7 @@ describe("hookCmd", () => {
       return { ...actual, IS_WIN: false };
     });
     const { hookCmd } = await import("../../src/hooks/cmd");
-    expect(hookCmd("/Users/foo/.claude/hooks/x.js")).toBe(
-      'node "/Users/foo/.claude/hooks/x.js"'
-    );
+    expect(hookCmd("/Users/foo/.claude/hooks/x.js")).toBe('node "/Users/foo/.claude/hooks/x.js"');
     vi.doUnmock("../../src/paths");
   });
 
@@ -34,9 +32,7 @@ describe("hookCmd", () => {
       return { ...actual, IS_WIN: false };
     });
     const { hookCmd } = await import("../../src/hooks/cmd");
-    expect(hookCmd("/Users/foo/My Folder/hook.js")).toBe(
-      'node "/Users/foo/My Folder/hook.js"'
-    );
+    expect(hookCmd("/Users/foo/My Folder/hook.js")).toBe('node "/Users/foo/My Folder/hook.js"');
     vi.doUnmock("../../src/paths");
   });
 });

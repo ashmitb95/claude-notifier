@@ -192,13 +192,24 @@
     "test:unit": "vitest run test/unit",
     "test:hook": "vitest run test/hook",
     "test:watch": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc -p ./ --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "smoke": "bash scripts/smoke.sh"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
     "@vitest/coverage-v8": "^4.1.6",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
     "typescript": "^5.3.0",
+    "typescript-eslint": "^8.59.3",
     "vitest": "^4.1.6"
   }
 }
