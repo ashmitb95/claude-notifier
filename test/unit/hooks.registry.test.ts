@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import * as path from "path";
 import { HOOKS, hookFileName, hookDestPath, ALL_HOOK_TYPES } from "../../src/hooks/registry";
 import { HOOK_EXT, HOOKS_DIR } from "../../src/paths";
 
@@ -50,7 +51,7 @@ describe("HOOKS registry", () => {
 
   it("hookDestPath is HOOKS_DIR + filename", () => {
     for (const hook of HOOKS) {
-      expect(hookDestPath(hook)).toBe(`${HOOKS_DIR}/${hookFileName(hook)}`);
+      expect(hookDestPath(hook)).toBe(path.join(HOOKS_DIR, hookFileName(hook)));
     }
   });
 });
