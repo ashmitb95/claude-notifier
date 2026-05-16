@@ -29,7 +29,10 @@ export function parseSignal(content: string): ParsedSignal {
 
   // v2 detection: third token is "-" or a token without path separators.
   // v1: third token starts the cwd (which contains / or \\, or is missing).
-  const isV2 = third !== undefined && third !== "" && (third === "-" || (!third.includes("/") && !third.includes("\\")));
+  const isV2 =
+    third !== undefined &&
+    third !== "" &&
+    (third === "-" || (!third.includes("/") && !third.includes("\\")));
 
   if (isV2) {
     const sessionId = third === "-" ? null : (third ?? null);

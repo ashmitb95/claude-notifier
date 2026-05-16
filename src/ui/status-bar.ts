@@ -8,10 +8,7 @@ let soundEnabled = true;
 export function createStatusBar(context: vscode.ExtensionContext): void {
   soundEnabled = !fs.existsSync(MUTE_FLAG);
 
-  statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-    100
-  );
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBarItem.command = "claudeNotifier.toggleSound";
   updateStatusBar();
   statusBarItem.show();
@@ -21,14 +18,14 @@ export function createStatusBar(context: vscode.ExtensionContext): void {
 export function toggleSound(): void {
   soundEnabled = !soundEnabled;
   if (soundEnabled) {
-    try { fs.unlinkSync(MUTE_FLAG); } catch {}
+    try {
+      fs.unlinkSync(MUTE_FLAG);
+    } catch {}
   } else {
     fs.writeFileSync(MUTE_FLAG, "");
   }
   updateStatusBar();
-  vscode.window.showInformationMessage(
-    `Claude Notifier sound: ${soundEnabled ? "ON" : "OFF"}`
-  );
+  vscode.window.showInformationMessage(`Claude Notifier sound: ${soundEnabled ? "ON" : "OFF"}`);
 }
 
 function updateStatusBar(): void {

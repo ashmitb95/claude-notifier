@@ -5,6 +5,6 @@ export const LEVELS = {
   OFF: "off",
 } as const;
 
-export type Level = typeof LEVELS[keyof typeof LEVELS];
+export type Level = (typeof LEVELS)[keyof typeof LEVELS];
 
 export type SignalReason = "input" | "question" | "done";

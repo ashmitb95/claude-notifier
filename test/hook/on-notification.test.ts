@@ -20,11 +20,7 @@ describe("hook: claude-notifier-on-notification", () => {
   });
 
   it("non-permission_prompt notification_type is ignored", () => {
-    const res = runHook(
-      SCRIPT,
-      { notification_type: "idle", session_id: "s-1" },
-      home.root
-    );
+    const res = runHook(SCRIPT, { notification_type: "idle", session_id: "s-1" }, home.root);
     expect(res.status).toBe(0);
     expect(readSignal(home.signalFile)).toBe("");
   });

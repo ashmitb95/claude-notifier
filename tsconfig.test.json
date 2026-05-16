@@ -4,5 +4,5 @@
     "noEmit": true,
     "types": ["node", "vscode"]
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "vitest.config.ts", "eslint.config.mjs"]
 }

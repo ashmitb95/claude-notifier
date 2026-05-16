@@ -21,11 +21,7 @@ describe("hook: claude-notifier-on-permission", () => {
   });
 
   it("AskUserQuestion is skipped (handled by the question hook)", () => {
-    const res = runHook(
-      SCRIPT,
-      { tool_name: "AskUserQuestion", session_id: "s-1" },
-      home.root
-    );
+    const res = runHook(SCRIPT, { tool_name: "AskUserQuestion", session_id: "s-1" }, home.root);
     expect(res.status).toBe(0);
     expect(readSignal(home.signalFile)).toBe("");
   });
@@ -39,10 +35,7 @@ describe("hook: claude-notifier-on-permission", () => {
   });
 
   it("level=off: exits before signal write", () => {
-    fs.writeFileSync(
-      home.configFile,
-      JSON.stringify({ needsPermission: { level: "off" } })
-    );
+    fs.writeFileSync(home.configFile, JSON.stringify({ needsPermission: { level: "off" } }));
     const res = runHook(SCRIPT, { tool_name: "Bash", session_id: "s-1" }, home.root);
     expect(res.status).toBe(0);
     expect(readSignal(home.signalFile)).toBe("");

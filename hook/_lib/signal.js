@@ -20,9 +20,7 @@ function writeSignal(reason, sessionId, cwd) {
     // parseable. Empty/missing → "-".
     const sid = sessionId ? String(sessionId).replace(/\s+/g, "") : "-";
     const safeSid = sid || "-";
-    const payload = cwd
-      ? `${reason} ${ts} ${safeSid} ${cwd}`
-      : `${reason} ${ts} ${safeSid}`;
+    const payload = cwd ? `${reason} ${ts} ${safeSid} ${cwd}` : `${reason} ${ts} ${safeSid}`;
     fs.writeFileSync(SIGNAL_FILE, payload);
   } catch {}
 }

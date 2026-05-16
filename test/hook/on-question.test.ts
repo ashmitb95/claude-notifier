@@ -31,11 +31,7 @@ describe("hook: claude-notifier-on-question", () => {
 
   it("muted: exits before signal write", () => {
     fs.writeFileSync(home.muteFlag, "");
-    const res = runHook(
-      SCRIPT,
-      { tool_name: "AskUserQuestion", session_id: "s-1" },
-      home.root
-    );
+    const res = runHook(SCRIPT, { tool_name: "AskUserQuestion", session_id: "s-1" }, home.root);
     expect(res.status).toBe(0);
     expect(readSignal(home.signalFile)).toBe("");
     expect(res.durationMs).toBeLessThan(500);
@@ -43,11 +39,7 @@ describe("hook: claude-notifier-on-question", () => {
 
   it("level=off: exits before signal write", () => {
     fs.writeFileSync(home.configFile, JSON.stringify({ asksQuestion: { level: "off" } }));
-    const res = runHook(
-      SCRIPT,
-      { tool_name: "AskUserQuestion", session_id: "s-1" },
-      home.root
-    );
+    const res = runHook(SCRIPT, { tool_name: "AskUserQuestion", session_id: "s-1" }, home.root);
     expect(res.status).toBe(0);
     expect(readSignal(home.signalFile)).toBe("");
   });

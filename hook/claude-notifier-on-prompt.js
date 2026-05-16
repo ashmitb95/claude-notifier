@@ -9,7 +9,11 @@ process.stdin.setEncoding("utf-8");
 process.stdin.on("data", (chunk) => (raw += chunk));
 process.stdin.on("end", () => {
   let input = {};
-  try { input = JSON.parse(raw); } catch { process.exit(0); }
+  try {
+    input = JSON.parse(raw);
+  } catch {
+    process.exit(0);
+  }
   writeSignal("prompt", input.session_id);
   process.exit(0);
 });

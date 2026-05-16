@@ -63,7 +63,9 @@ function resolveSessionId(sessionId: string | null | undefined): string {
 function armIdleTimer(sid: string, s: SessionStage): void {
   if (s.idleTimer) clearTimeout(s.idleTimer);
   s.idleTimer = setTimeout(() => {
-    log(`[stage] session ${sid} advanced ${s.stageId}→${s.stageId + 1} (idle ${IDLE_RESET_MS / 60000}m)`);
+    log(
+      `[stage] session ${sid} advanced ${s.stageId}→${s.stageId + 1} (idle ${IDLE_RESET_MS / 60000}m)`
+    );
     s.stageId += 1;
     s.fired.clear();
     s.idleTimer = null;

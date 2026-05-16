@@ -20,12 +20,18 @@ beforeAll(() => {
   process.env.HOME = HOME_DIR;
 });
 beforeEach(() => {
-  try { fs.unlinkSync(CONFIG_FILE); } catch {}
-  try { fs.unlinkSync(MUTE_FLAG); } catch {}
+  try {
+    fs.unlinkSync(CONFIG_FILE);
+  } catch {}
+  try {
+    fs.unlinkSync(MUTE_FLAG);
+  } catch {}
 });
 afterAll(() => {
   process.env.HOME = ORIG_HOME;
-  try { fs.rmSync(HOME_DIR, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(HOME_DIR, { recursive: true, force: true });
+  } catch {}
 });
 
 describe("hook/_lib/config — isMuted", () => {

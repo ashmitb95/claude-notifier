@@ -22,11 +22,19 @@ export function getCodeCliPath(): string | null {
 
 export function findTerminalNotifier(): string | null {
   if (!IS_MAC) return null;
-  for (const candidate of ["/opt/homebrew/bin/terminal-notifier", "/usr/local/bin/terminal-notifier"]) {
-    try { fs.accessSync(candidate, fs.constants.X_OK); return candidate; } catch {}
+  for (const candidate of [
+    "/opt/homebrew/bin/terminal-notifier",
+    "/usr/local/bin/terminal-notifier",
+  ]) {
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {}
   }
   try {
-    const found = execFileSync("/usr/bin/which", ["terminal-notifier"], { encoding: "utf-8" }).trim();
+    const found = execFileSync("/usr/bin/which", ["terminal-notifier"], {
+      encoding: "utf-8",
+    }).trim();
     if (found) return found;
   } catch {}
   return null;
@@ -37,7 +45,9 @@ export function findCodeCli(): string | null {
     const candidate = path.join(vscode.env.appRoot, "bin", "code");
     fs.accessSync(candidate, fs.constants.X_OK);
     return candidate;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /** Discover terminal-notifier and code CLI on activation. */
@@ -64,20 +74,29 @@ export function installTerminalNotifierFlow(): void {
   }
   let brew: string | null = null;
   for (const c of ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]) {
-    try { fs.accessSync(c, fs.constants.X_OK); brew = c; break; } catch {}
+    try {
+      fs.accessSync(c, fs.constants.X_OK);
+      brew = c;
+      break;
+    } catch {}
   }
   if (!brew) {
-    vscode.window.showWarningMessage(
-      "Homebrew not found. Install Homebrew first (https://brew.sh), then re-run this command.",
-      "Open brew.sh"
-    ).then((pick) => {
-      if (pick === "Open brew.sh") vscode.env.openExternal(vscode.Uri.parse("https://brew.sh"));
-    });
+    vscode.window
+      .showWarningMessage(
+        "Homebrew not found. Install Homebrew first (https://brew.sh), then re-run this command.",
+        "Open brew.sh"
+      )
+      .then((pick) => {
+        if (pick === "Open brew.sh") vscode.env.openExternal(vscode.Uri.parse("https://brew.sh"));
+      });
     return;
   }
   // Run interactively in a terminal so the user sees output and any prompts.
-  const terminal = vscode.window.createTerminal({ name: "Claude Notifier — install terminal-notifier" });
+  const terminal = vscode.window.createTerminal({
+    name: "Claude Notifier — install terminal-notifier",
+  });
   terminal.show();
-  terminal.sendText(`${brew} install terminal-notifier && echo "" && echo "✓ Done. Run 'Developer: Reload Window' to enable clickable notifications."`);
+  terminal.sendText(
+    `${brew} install terminal-notifier && echo "" && echo "✓ Done. Run 'Developer: Reload Window' to enable clickable notifications."`
+  );
 }
-
