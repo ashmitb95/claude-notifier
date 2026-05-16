@@ -52,7 +52,7 @@ jobs:
         run: npm run package
 
       - name: Upload .vsix artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: claude-notifier-${{ matrix.os }}
           path: "*.vsix"
