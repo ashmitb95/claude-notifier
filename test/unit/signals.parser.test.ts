@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest";
 import { parseSignal } from "../../src/signals/parser";
 
 describe("parseSignal", () => {
-  describe("v2 format: <reason> <ts> <session_id|-> [cwd]", () => {
+  describe("v2 format: <reason> <ts> <session_id|-> [<pid_chain>] [cwd]", () => {
     it("parses session_id and cwd", () => {
       expect(parseSignal("done 1234 abc-123 /Users/foo/proj")).toEqual({
         reason: "done",
         sessionId: "abc-123",
         cwd: "/Users/foo/proj",
+        pidChain: null,
       });
     });
 
@@ -16,6 +17,7 @@ describe("parseSignal", () => {
         reason: "done",
         sessionId: null,
         cwd: "/Users/foo/proj",
+        pidChain: null,
       });
     });
 
@@ -24,6 +26,7 @@ describe("parseSignal", () => {
         reason: "done",
         sessionId: "abc-123",
         cwd: "/Users/foo/my project/code",
+        pidChain: null,
       });
     });
 
@@ -32,6 +35,7 @@ describe("parseSignal", () => {
         reason: "input",
         sessionId: "abc-123",
         cwd: "",
+        pidChain: null,
       });
     });
 
@@ -40,6 +44,7 @@ describe("parseSignal", () => {
         reason: "prompt",
         sessionId: "abc-123",
         cwd: "",
+        pidChain: null,
       });
     });
 
@@ -48,6 +53,51 @@ describe("parseSignal", () => {
         reason: "done",
         sessionId: "abc-123",
         cwd: "C:\\Users\\foo\\proj",
+        pidChain: null,
+      });
+    });
+  });
+
+  describe("v2 with pid_chain", () => {
+    it("parses a multi-pid chain before cwd", () => {
+      expect(parseSignal("done 1234 abc-123 1001,1002,1003 /Users/foo/proj")).toEqual({
+        reason: "done",
+        sessionId: "abc-123",
+        cwd: "/Users/foo/proj",
+        pidChain: [1001, 1002, 1003],
+      });
+    });
+
+    it("parses a single-pid chain", () => {
+      expect(parseSignal("done 1234 abc 4242 /Users/foo")).toEqual({
+        reason: "done",
+        sessionId: "abc",
+        cwd: "/Users/foo",
+        pidChain: [4242],
+      });
+    });
+
+    it("parses a chain with '-' session_id", () => {
+      expect(parseSignal("done 1234 - 100,200 /Users/foo")).toEqual({
+        reason: "done",
+        sessionId: null,
+        cwd: "/Users/foo",
+        pidChain: [100, 200],
+      });
+    });
+
+    it("does not misdetect a cwd whose first segment looks numeric", () => {
+      const r = parseSignal("done 1234 abc /Users/123/foo");
+      expect(r.cwd).toBe("/Users/123/foo");
+      expect(r.pidChain).toBeNull();
+    });
+
+    it("preserves cwd with spaces after pid_chain", () => {
+      expect(parseSignal("done 1234 abc 100,200 /Users/foo/my project")).toEqual({
+        reason: "done",
+        sessionId: "abc",
+        cwd: "/Users/foo/my project",
+        pidChain: [100, 200],
       });
     });
   });
@@ -58,6 +108,7 @@ describe("parseSignal", () => {
         reason: "done",
         sessionId: null,
         cwd: "/Users/foo/proj",
+        pidChain: null,
       });
     });
 
@@ -66,6 +117,7 @@ describe("parseSignal", () => {
         reason: "input",
         sessionId: null,
         cwd: "",
+        pidChain: null,
       });
     });
 
@@ -74,30 +126,42 @@ describe("parseSignal", () => {
       const r = parseSignal("done 1234 /tmp");
       expect(r.sessionId).toBeNull();
       expect(r.cwd).toBe("/tmp");
+      expect(r.pidChain).toBeNull();
     });
 
     it("disambiguates via path separator: backslash → cwd", () => {
       const r = parseSignal("done 1234 C:\\tmp");
       expect(r.sessionId).toBeNull();
       expect(r.cwd).toBe("C:\\tmp");
+      expect(r.pidChain).toBeNull();
     });
   });
 
   describe("edge cases", () => {
     it("empty input returns empty reason", () => {
-      expect(parseSignal("")).toEqual({ reason: "", sessionId: null, cwd: "" });
+      expect(parseSignal("")).toEqual({
+        reason: "",
+        sessionId: null,
+        cwd: "",
+        pidChain: null,
+      });
     });
 
     it("single-word legacy signal (no timestamp, no cwd)", () => {
-      expect(parseSignal("done")).toEqual({ reason: "done", sessionId: null, cwd: "" });
+      expect(parseSignal("done")).toEqual({
+        reason: "done",
+        sessionId: null,
+        cwd: "",
+        pidChain: null,
+      });
     });
 
     it("reason only with trailing space", () => {
-      // First space exists, second doesn't — degenerate but should not throw.
       const r = parseSignal("done ");
       expect(r.reason).toBe("done");
       expect(r.sessionId).toBeNull();
       expect(r.cwd).toBe("");
+      expect(r.pidChain).toBeNull();
     });
   });
 });

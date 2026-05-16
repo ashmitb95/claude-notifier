@@ -6,6 +6,7 @@ export const HOOKS_DIR = path.join(CLAUDE_DIR, "hooks");
 export const SETTINGS_FILE = path.join(CLAUDE_DIR, "settings.json");
 export const CONFIG_FILE = path.join(HOOKS_DIR, "claude-notifier-config.json");
 export const SIGNAL_FILE = path.join(HOOKS_DIR, "claude-signal");
+export const FOCUS_SIGNAL_FILE = path.join(HOOKS_DIR, "claude-notifier-focus");
 export const MUTE_FLAG = path.join(HOOKS_DIR, "claude-notifier-muted");
 
 // Directory of per-PID marker files. Hooks treat the extension as active if

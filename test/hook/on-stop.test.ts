@@ -16,22 +16,24 @@ describe("hook: claude-notifier-on-stop", () => {
   });
   afterEach(() => home.dispose());
 
+  // The pid_chain field is optional in the v2 signal: emitted on macOS/Linux
+  // by the Stop hook, omitted on Windows. Regexes below tolerate both shapes.
   it("writes a v2 'done' signal with session id and cwd", () => {
     const res = runHook(SCRIPT, { session_id: "s-123", cwd: "/Users/foo/proj" }, home.root);
     expect(res.status).toBe(0);
-    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-123 \/Users\/foo\/proj$/);
+    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-123( [0-9,]+)? \/Users\/foo\/proj$/);
   });
 
   it("renders missing session id as '-'", () => {
     const res = runHook(SCRIPT, { cwd: "/Users/foo/proj" }, home.root);
     expect(res.status).toBe(0);
-    expect(readSignal(home.signalFile)).toMatch(/^done \d+ - \/Users\/foo\/proj$/);
+    expect(readSignal(home.signalFile)).toMatch(/^done \d+ -( [0-9,]+)? \/Users\/foo\/proj$/);
   });
 
   it("falls back to process.cwd() when input.cwd missing", () => {
     const res = runHook(SCRIPT, { session_id: "s-1" }, home.root);
     expect(res.status).toBe(0);
-    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-1 \S+/);
+    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-1( [0-9,]+)? \S+/);
   });
 
   it("stop_hook_active short-circuits before signal write", () => {
@@ -71,7 +73,7 @@ describe("hook: claude-notifier-on-stop", () => {
       home.root
     );
     expect(res.status).toBe(0);
-    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-1 \/Users\/foo\/proj$/);
+    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-1( [0-9,]+)? \/Users\/foo\/proj$/);
   });
 
   it("cwd outside any active marker's folder falls through (signal still written)", () => {
@@ -80,7 +82,7 @@ describe("hook: claude-notifier-on-stop", () => {
     // and the hook proceeds to terminal-fallback. Signal still gets written.
     const res = runHook(SCRIPT, { session_id: "s-1", cwd: "/tmp/different" }, home.root);
     expect(res.status).toBe(0);
-    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-1 \/tmp\/different$/);
+    expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-1( [0-9,]+)? \/tmp\/different$/);
     // No timing assertion — terminal fallback may play sound here.
   });
 });

@@ -6,6 +6,7 @@ import { parseSignal } from "./parser";
 import * as stage from "./stage";
 import { log } from "../log";
 import { getOwnWorkspaceFolders, cwdMatchesFolder } from "../routing/cwd";
+import { rememberDone, getRememberedDone, revealClaudeTab } from "../routing/focus";
 import { getEventLevel, getEventConfig } from "../settings/sync";
 import { playLocalSound } from "../notifications/sound";
 import { showLocalNotification } from "../notifications/local";
@@ -46,7 +47,7 @@ function handleSignal(): void {
   }
   if (!content) return;
 
-  const { reason, sessionId, cwd } = parseSignal(content);
+  const { reason, sessionId, cwd, pidChain } = parseSignal(content);
   log("signal:", reason, sessionId ?? "-", cwd || "(no cwd)");
 
   // UserPromptSubmit is coordination-only — advance the stage and exit.
@@ -66,13 +67,17 @@ function handleSignal(): void {
     }
   }
 
+  if (reason === "done" && cwd) {
+    rememberDone({ sessionId, pidChain: pidChain ?? [], cwd });
+  }
+
   if (reason === "done" || reason === "input" || reason === "question") {
     // Stage dedup: at most one notification per (session, reason) per stage.
     // Stage advances on UserPromptSubmit (prompt signal) or idle (30 min).
     if (!stage.shouldFire(sessionId, reason)) {
       return;
     }
-    showNotification(reason);
+    showNotification(reason, cwd);
   }
 
   // doneDebounceMs is deprecated — stage dedup replaces it. Log once so
@@ -95,7 +100,7 @@ function warnDeprecatedSettingOnce(): void {
   }
 }
 
-function showNotification(reason: string): void {
+function showNotification(reason: string, cwd: string): void {
   // Architecture note: "question" and "input" local sounds are played by their
   // respective hook scripts (PreToolUse / PermissionRequest) — not the extension.
   // Only "done" local sounds are played here, because the extension is the
@@ -133,9 +138,15 @@ function showNotification(reason: string): void {
       }
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
-      vscode.window.showInformationMessage("Claude has finished the task.");
+      vscode.window
+        .showInformationMessage("Claude has finished the task.", "Reveal")
+        .then((pick) => {
+          if (pick === "Reveal") {
+            void revealClaudeTab(getRememberedDone(cwd));
+          }
+        });
       if (!isRemote) {
-        showLocalNotification("Claude has finished the task.");
+        showLocalNotification("Claude has finished the task.", cwd);
       }
     }
   }

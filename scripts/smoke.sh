@@ -60,11 +60,12 @@ run_hook() {
   echo "$stdin" | HOME="$TMPHOME" PATH=/ "$NODE_BIN" "$REPO/hook/$name.js"
 }
 
-# Stop: expect "done <ts> <sid> <cwd>"
+# Stop: expect "done <ts> <sid> [<pid_chain>] <cwd>" — pid_chain present on
+# macOS/Linux, absent on Windows. The bracketed alternation tolerates both.
 > "$TMPHOME/.claude/hooks/claude-signal"
 run_hook claude-notifier-on-stop '{"session_id":"smoke","cwd":"/tmp/x"}'
 sig="$(cat "$TMPHOME/.claude/hooks/claude-signal" 2>/dev/null || echo '')"
-[[ "$sig" =~ ^done\ [0-9]+\ smoke\ /tmp/x$ ]] || fail "stop signal wrong: $sig"
+[[ "$sig" =~ ^done\ [0-9]+\ smoke(\ [0-9,]+)?\ /tmp/x$ ]] || fail "stop signal wrong: $sig"
 pass "stop hook: $sig"
 
 # Permission: expect "input <ts> <sid>"

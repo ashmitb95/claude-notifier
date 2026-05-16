@@ -59,4 +59,26 @@ describe("hook/_lib/signal — writeSignal", () => {
   it("does not throw with valid args", () => {
     expect(() => signal.writeSignal("done", "x", "/cwd")).not.toThrow();
   });
+
+  it("includes pid_chain CSV before cwd when provided", () => {
+    signal.writeSignal("done", "abc", "/Users/foo", [1001, 1002, 1003]);
+    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(
+      /^done \d+ abc 1001,1002,1003 \/Users\/foo$/
+    );
+  });
+
+  it("omits pid_chain when array is empty", () => {
+    signal.writeSignal("done", "abc", "/Users/foo", []);
+    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(/^done \d+ abc \/Users\/foo$/);
+  });
+
+  it("omits pid_chain when undefined", () => {
+    signal.writeSignal("done", "abc", "/Users/foo");
+    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(/^done \d+ abc \/Users\/foo$/);
+  });
+
+  it("filters non-positive and non-integer pids", () => {
+    signal.writeSignal("done", "abc", "/Users/foo", [1001, 0, -5, 1.5, 2002]);
+    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(/^done \d+ abc 1001,2002 \/Users\/foo$/);
+  });
 });

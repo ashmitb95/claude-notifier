@@ -5,6 +5,7 @@ import { syncConfig } from "./settings/sync";
 import { setupHooks } from "./hooks/lifecycle";
 import { initDiscovery, installTerminalNotifierFlow } from "./notifications/terminal-notifier";
 import { writeOwnPidFile, cleanStalePidFiles } from "./routing/cwd";
+import { startFocusSignalWatcher } from "./routing/focus";
 import { startSignalWatcher } from "./signals/dispatch";
 import { createStatusBar, toggleSound } from "./ui/status-bar";
 import { initLogger, log } from "./log";
@@ -43,7 +44,8 @@ export function activate(context: vscode.ExtensionContext) {
         syncConfig();
       }
     }),
-    startSignalWatcher()
+    startSignalWatcher(),
+    startFocusSignalWatcher()
   );
 }
 

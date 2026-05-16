@@ -9,6 +9,7 @@ const { playSound } = require("./_lib/play");
 const { showNotification } = require("./_lib/notify");
 const { extensionOwnsCwd } = require("./_lib/active");
 const { writeSignal } = require("./_lib/signal");
+const { getAncestorPids } = require("./_lib/pid");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -25,8 +26,9 @@ process.stdin.on("end", () => {
   if (isMuted()) process.exit(0);
 
   const cwd = (input && input.cwd) || process.cwd() || "";
+  const pidChain = getAncestorPids();
 
-  writeSignal("done", input.session_id, cwd);
+  writeSignal("done", input.session_id, cwd, pidChain);
 
   // If a VSCode window owns this cwd, the extension handles sound/notification
   // with debounce. Otherwise fall through to direct playback.
