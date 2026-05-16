@@ -102,6 +102,12 @@ Each hook reads `~/.claude/hooks/claude-notifier-config.json` (synced from VSCod
 
 On **macOS**, hooks use `afplay` and `osascript`. On **Windows** and **WSL**, hooks use PowerShell with `NotifyIcon` balloon tips and system sounds. On **Linux**, hooks use `paplay` (with `aplay` as fallback) for audio and `notify-send` for notifications — install `libnotify` (`notify-send`), a PulseAudio/PipeWire or ALSA stack, and the `sound-theme-freedesktop` package if they aren't already present.
 
+### Behavior
+
+- **Per-session dedup.** Rapid back-to-back events within a single Claude session coalesce automatically — one notification per stage, not a flood. A stage advances when you send your next prompt or after ~30 minutes of idle time.
+- **Bundled fallback sounds.** If the configured system sound file is missing on disk, a bundled WAV plays so you still hear something.
+- **Diagnostic log.** `View → Output → Claude Notifier` shows activation, signal receipts, dedup decisions, and configuration warnings — useful when debugging "I didn't get a notification."
+
 ### Clickable macOS notifications (optional)
 
 By default, macOS attributes `osascript` notifications to the Script Editor bundle, so clicking one opens Script Editor instead of focusing VS Code. To get clickable notifications that focus the specific window the notification fired from, install [`terminal-notifier`](https://github.com/julienXX/terminal-notifier):
@@ -141,11 +147,7 @@ Remove-Item "$env:USERPROFILE\.claude\hooks\claude-notifier-muted" # unmute
 
 ## Contributing
 
-Bug reports and feature requests are welcome — please [open an issue](https://github.com/ashmitb95/claude-notifier/issues/new) first so we can discuss the change before code is written. For pull requests:
-
-- Branch from `main` and keep changes focused — one fix or feature per PR.
-- Follow the existing commit style (`fix:`, `feat:`, `chore:` …).
-- Test your changes locally on the platform(s) you've touched (macOS, Windows, WSL, or Linux) and note what you verified in the PR description.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, the test/lint/typecheck gates, code map, and PR conventions. Bug reports and feature requests are welcome — [open an issue](https://github.com/ashmitb95/claude-notifier/issues/new) first to discuss.
 
 ### Contributors
 
