@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Hook tests
+        run: npm run test:hook
+
+      - name: Package .vsix
+        # vsce package is the same on every OS; running it on all three
+        # confirms the build is reproducible everywhere we ship to.
+        run: npm run package
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-notifier-${{ matrix.os }}
+          path: "*.vsix"
+          retention-days: 14
+
+  smoke:
+    # Runs only after CI passes on every matrix arm. macOS-only because
+    # scripts/smoke.sh exercises the .js hooks (afplay path is mac-specific,
+    # and the rest of the script is bash). PowerShell hook smoke can be
+    # added later when we wire pwsh-based smoke for Windows.
+    name: smoke (macos)
+    needs: ci
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run smoke

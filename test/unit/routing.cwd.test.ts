@@ -1,39 +1,48 @@
 import { describe, it, expect } from "vitest";
+import * as path from "path";
 import { cwdMatchesFolder } from "../../src/routing/cwd";
+
+// cwdMatchesFolder uses path.sep at runtime, so test paths use path.join
+// to stay platform-correct (\\ on Windows, / elsewhere).
+const ROOT = path.join(path.sep, "Users", "foo", "proj");
+const SRC = path.join(ROOT, "src");
+const NESTED = path.join(ROOT, "src", "a", "b", "c");
 
 describe("cwdMatchesFolder", () => {
   it("exact match", () => {
-    expect(cwdMatchesFolder("/Users/foo/proj", "/Users/foo/proj")).toBe(true);
+    expect(cwdMatchesFolder(ROOT, ROOT)).toBe(true);
   });
 
   it("cwd inside folder", () => {
-    expect(cwdMatchesFolder("/Users/foo/proj/src", "/Users/foo/proj")).toBe(true);
+    expect(cwdMatchesFolder(SRC, ROOT)).toBe(true);
   });
 
   it("cwd deeply nested in folder", () => {
-    expect(cwdMatchesFolder("/Users/foo/proj/src/a/b/c", "/Users/foo/proj")).toBe(true);
+    expect(cwdMatchesFolder(NESTED, ROOT)).toBe(true);
   });
 
   it("trailing separator on folder doesn't break match", () => {
-    expect(cwdMatchesFolder("/Users/foo/proj/src", "/Users/foo/proj/")).toBe(true);
+    expect(cwdMatchesFolder(SRC, ROOT + path.sep)).toBe(true);
   });
 
   it("sibling folder is NOT a match (prefix collision avoided)", () => {
-    // "/Users/foo/proj-other" starts with "/Users/foo/proj" textually but is
-    // a different directory. The trailing-separator check guards this.
-    expect(cwdMatchesFolder("/Users/foo/proj-other", "/Users/foo/proj")).toBe(false);
+    // "<root>-other" starts with "<root>" textually but is a different dir.
+    // The trailing-separator check guards this.
+    expect(cwdMatchesFolder(ROOT + "-other", ROOT)).toBe(false);
   });
 
-  it("sibling at root is NOT a match", () => {
-    expect(cwdMatchesFolder("/Users/foo/projects-other", "/Users/foo/projects")).toBe(false);
+  it("sibling at projects level is NOT a match", () => {
+    const projects = path.join(path.sep, "Users", "foo", "projects");
+    const projectsOther = path.join(path.sep, "Users", "foo", "projects-other");
+    expect(cwdMatchesFolder(projectsOther, projects)).toBe(false);
   });
 
   it("empty cwd does not match anything", () => {
-    expect(cwdMatchesFolder("", "/Users/foo/proj")).toBe(false);
+    expect(cwdMatchesFolder("", ROOT)).toBe(false);
   });
 
   it("empty folder does not match anything", () => {
-    expect(cwdMatchesFolder("/Users/foo/proj", "")).toBe(false);
+    expect(cwdMatchesFolder(ROOT, "")).toBe(false);
   });
 
   it("both empty is not a match", () => {
@@ -41,6 +50,7 @@ describe("cwdMatchesFolder", () => {
   });
 
   it("cwd is parent of folder is NOT a match", () => {
-    expect(cwdMatchesFolder("/Users/foo", "/Users/foo/proj")).toBe(false);
+    const parent = path.join(path.sep, "Users", "foo");
+    expect(cwdMatchesFolder(parent, ROOT)).toBe(false);
   });
 });

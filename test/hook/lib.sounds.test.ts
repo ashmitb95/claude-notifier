@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import * as path from "path";
 import {
   resolveSound,
   MACOS_SOUNDS,
@@ -85,13 +86,19 @@ describe("hook/_lib/sounds — cross-platform tables", () => {
 });
 
 describe("hook/_lib/sounds — BUNDLED_FALLBACK", () => {
+  // path.join uses the platform separator, so endsWith assertions adapt
+  // automatically (forward slash on Unix, backslash on Windows).
   it("exposes a bundled fallback for each event kind", () => {
-    expect(BUNDLED_FALLBACK.taskCompleted).toMatch(/sounds\/task-complete\.wav$/);
-    expect(BUNDLED_FALLBACK.needsPermission).toMatch(/sounds\/needs-input\.wav$/);
-    expect(BUNDLED_FALLBACK.asksQuestion).toMatch(/sounds\/question\.wav$/);
+    expect(BUNDLED_FALLBACK.taskCompleted.endsWith(path.join("sounds", "task-complete.wav"))).toBe(
+      true
+    );
+    expect(BUNDLED_FALLBACK.needsPermission.endsWith(path.join("sounds", "needs-input.wav"))).toBe(
+      true
+    );
+    expect(BUNDLED_FALLBACK.asksQuestion.endsWith(path.join("sounds", "question.wav"))).toBe(true);
   });
 
   it("BUNDLED_SOUNDS_DIR resolves under hook/_lib/sounds/ (deploy target)", () => {
-    expect(BUNDLED_SOUNDS_DIR.endsWith("/hook/_lib/sounds")).toBe(true);
+    expect(BUNDLED_SOUNDS_DIR.endsWith(path.join("hook", "_lib", "sounds"))).toBe(true);
   });
 });
