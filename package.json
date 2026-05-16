@@ -188,8 +188,9 @@
     "watch": "tsc -watch -p ./",
     "package": "npx @vscode/vsce package",
     "vscode:uninstall": "node ./out/uninstall.js",
-    "test": "npm run test:unit",
-    "test:unit": "vitest run",
+    "test": "npm run test:unit && npm run test:hook",
+    "test:unit": "vitest run test/unit",
+    "test:hook": "vitest run test/hook",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage"
   },

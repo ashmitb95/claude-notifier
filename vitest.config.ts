@@ -3,10 +3,13 @@ import * as path from "path";
 
 export default defineConfig({
   test: {
-    include: ["test/unit/**/*.test.ts"],
+    include: ["test/unit/**/*.test.ts", "test/hook/**/*.test.ts"],
+    // Hook subprocess tests can take several seconds (waiting for sound to
+    // finish or for spawn timeouts); raise the per-test ceiling.
+    testTimeout: 10_000,
     coverage: {
       provider: "v8",
-      include: ["src/**/*.ts"],
+      include: ["src/**/*.ts", "hook/_lib/**/*.js"],
       exclude: ["src/extension.ts", "src/uninstall.ts"],
       reporter: ["text", "html"],
     },
