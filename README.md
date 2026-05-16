@@ -52,13 +52,7 @@ To uninstall:
 curl -fsSL https://raw.githubusercontent.com/ashmitb95/claude-notifier/main/uninstall.sh | bash
 ```
 
-**Windows (PowerShell):**
-
-```powershell
-irm https://raw.githubusercontent.com/ashmitb95/claude-notifier/main/install.ps1 | iex
-```
-
-> If you don't have a PowerShell install script yet, use the VSCode extension — it auto-configures everything on Windows.
+**Windows:** install the VSCode extension. It auto-configures the PowerShell hooks; no separate CLI installer is needed.
 
 ## Settings
 
