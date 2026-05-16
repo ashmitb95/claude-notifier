@@ -6,6 +6,7 @@ const { resolveSound, BUNDLED_FALLBACK } = require("./_lib/sounds");
 const { playSound } = require("./_lib/play");
 const { showNotification } = require("./_lib/notify");
 const { writeSignal } = require("./_lib/signal");
+const { buildClickAction, GENERIC_ACTIVATE } = require("./_lib/click");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -38,7 +39,11 @@ process.stdin.on("end", () => {
   }
 
   if (level === "sound+popup" || level === "popup") {
-    showNotification("Claude is asking you a question.");
+    const cwd = (input && input.cwd) || process.cwd() || "";
+    showNotification("Claude is asking you a question.", {
+      preferTerminalNotifier: true,
+      executeCmd: buildClickAction(cwd) || GENERIC_ACTIVATE,
+    });
   }
 
   writeSignal("question", input.session_id);

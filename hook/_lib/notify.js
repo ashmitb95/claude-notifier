@@ -34,11 +34,17 @@ function findTerminalNotifier() {
  *
  * On macOS: when opts.preferTerminalNotifier is true and terminal-notifier is
  * installed, use it (gives clickable notifications that focus VS Code). Else
- * falls back to osascript. Non-stop hooks set this to false because the
- * popup is short-lived and clickability matters less when the user is active.
+ * falls back to osascript.
+ *
+ * opts.executeCmd (macOS, terminal-notifier path only): shell snippet run when
+ * the user clicks the notification — typically brings VS Code forward and
+ * writes the focus-signal file so the extension reveals the matching tab.
+ * Ignored when terminal-notifier isn't installed (osascript notifications
+ * can't carry a click action; their click defaults to Script Editor).
  */
 function showNotification(message, opts = {}) {
   const preferTn = !!opts.preferTerminalNotifier;
+  const executeCmd = opts.executeCmd;
   try {
     if (USE_WIN) {
       const safeMsg = psSingleQuoteEscape(message);
@@ -58,7 +64,9 @@ function showNotification(message, opts = {}) {
       if (preferTn) {
         const tn = findTerminalNotifier();
         if (tn) {
-          execFileSync(tn, ["-title", TITLE, "-message", String(message)], { stdio: "ignore" });
+          const args = ["-title", TITLE, "-message", String(message)];
+          if (executeCmd) args.push("-execute", executeCmd);
+          execFileSync(tn, args, { stdio: "ignore" });
           return;
         }
       }

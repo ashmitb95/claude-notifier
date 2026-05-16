@@ -6,6 +6,7 @@ const { resolveSound, BUNDLED_FALLBACK } = require("./_lib/sounds");
 const { playSound } = require("./_lib/play");
 const { showNotification } = require("./_lib/notify");
 const { writeSignal } = require("./_lib/signal");
+const { buildClickAction, GENERIC_ACTIVATE } = require("./_lib/click");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -39,7 +40,11 @@ process.stdin.on("end", () => {
 
   if (level === "sound+popup" || level === "popup") {
     const tool = input.tool_name || "a tool";
-    showNotification(`Claude needs permission to use ${tool}.`);
+    const cwd = (input && input.cwd) || process.cwd() || "";
+    showNotification(`Claude needs permission to use ${tool}.`, {
+      preferTerminalNotifier: true,
+      executeCmd: buildClickAction(cwd) || GENERIC_ACTIVATE,
+    });
   }
 
   writeSignal("input", input.session_id);
