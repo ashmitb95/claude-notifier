@@ -2,11 +2,14 @@ name: ci
 
 on:
   push:
-    branches: [main, staging]
+    branches: [main]
   pull_request:
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # PRs group by PR number (so a force-push cancels the prior run for the
+  # same PR). Pushes to main group by ref. This separation prevents the
+  # push and pull_request events from racing on the same commit.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
