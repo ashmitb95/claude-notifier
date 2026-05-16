@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.0] - 2026-05-16
+
+### Added
+
+- Per-session stage-based notification dedup. Multiple `done`/`input`/`question` events within the same session+stage coalesce to one notification per reason. Stage advances on the new `UserPromptSubmit` hook or after 30 minutes idle.
+- `UserPromptSubmit` hook registered in `~/.claude/settings.json`. Coordination-only — no sound, popup, or settings knobs; signals the extension to advance the session's stage.
+- "Claude Notifier" output channel (`View → Output → Claude Notifier`). Diagnostic log of activation, signal receipts, stage transitions, dedup decisions, configuration warnings.
+- Bundled fallback sounds (`task-complete.wav`, `needs-input.wav`, `question.wav`) under `media/sounds/`. When the configured system sound file is missing on disk, the bundled fallback plays. Existing user sound choices are unchanged; defaults stay as system sounds.
+- Signal format v2: `<reason> <ts> <session_id|-> [cwd]`. v1 format still parsed for back-compat with stale hook deployments.
+- Shared hook library at `hook/_lib/*.js` and `hook/_lib.ps1`. Hook scripts shrunk 55–78%.
+- `CONTRIBUTING.md` with dev setup, F5 debug, gate scripts, code map, PR conventions.
+- GitHub issue + PR templates.
+- vitest unit + hook test suites (~110 tests across `test/unit/` and `test/hook/`).
+- ESLint flat config + Prettier + `tsc --strict` with `noUncheckedIndexedAccess`. Lint, format, typecheck, smoke npm scripts.
+- GitHub Actions CI workflow across Linux / macOS / Windows.
+
+### Changed
+
+- Internal module split: `src/extension.ts` reduced from 536 to 52 lines; logic distributed across `src/{paths,log,signals,hooks,settings,routing,notifications,ui}/`.
+- `package.json` default sounds reorganized to align with the new bundled fallback resolution path. User-selected presets unchanged.
+
+### Fixed
+
+- Shell-injection footgun in Linux `notify-send` and macOS `osascript` paths — both now use `execFileSync` to bypass the shell.
+
+### Deprecated
+
+- `claudeNotifier.doneDebounceMs`. Per-session stage dedup replaces it; the value is read but ignored. A one-line notice logs to the output channel the first time an explicit value is detected. Will be removed in a future release.
+
 ## [2.4.0] - 2026-05-14
 
 Contributions in this release by [@collectifweb](https://github.com/collectifweb).
