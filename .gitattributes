@@ -1,0 +1,10 @@
+# Enforce LF line endings on all text files, regardless of host OS. Prevents
+# CRLF from sneaking in via Windows checkouts and breaking Prettier/format
+# checks on CI.
+* text=auto eol=lf
+
+# Binary files: keep as-is.
+*.png binary
+*.wav binary
+*.aiff binary
+*.vsix binary
