@@ -171,6 +171,13 @@
           "default": "Funk",
           "description": "Sound preset when Claude asks a question. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
+        "claudeNotifier.soundVolume": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Volume multiplier applied to all notification sounds. 1 = system default, 2 = boosted (~200%). Honored on Linux (paplay) and macOS (afplay). Windows ignores this — Media.SoundPlayer has no volume API."
+        },
         "claudeNotifier.doneDebounceMs": {
           "type": "number",
           "default": 2000,

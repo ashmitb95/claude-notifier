@@ -7,7 +7,7 @@ import * as stage from "./stage";
 import { log } from "../log";
 import { getOwnWorkspaceFolders, cwdMatchesFolder } from "../routing/cwd";
 import { rememberDone, getRememberedDone, revealClaudeTab } from "../routing/focus";
-import { getEventLevel, getEventConfig } from "../settings/sync";
+import { getEventLevel, getEventConfig, getSoundVolume } from "../settings/sync";
 import { playLocalSound } from "../notifications/sound";
 import { showLocalNotification } from "../notifications/local";
 import { playRemoteSound } from "../notifications/remote";
@@ -133,7 +133,8 @@ function showNotification(reason: string, cwd: string): void {
         playLocalSound(
           cfg.sound,
           "/System/Library/Sounds/Hero.aiff",
-          "C:\\Windows\\Media\\tada.wav"
+          "C:\\Windows\\Media\\tada.wav",
+          getSoundVolume()
         );
       }
     }

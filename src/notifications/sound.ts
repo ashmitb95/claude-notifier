@@ -47,8 +47,22 @@ export const LINUX_SOUNDS: Record<string, string> = {
   Tink: `${LINUX_SOUNDS_DIR}/bell.oga`,
 };
 
-export function playLocalSound(soundName: string, defaultMac: string, defaultWin: string): void {
+function clampVolume(v: number | undefined): number {
+  if (v === undefined || !Number.isFinite(v)) return 1;
+  if (v < 0) return 0;
+  if (v > 2) return 2;
+  return v;
+}
+
+export function playLocalSound(
+  soundName: string,
+  defaultMac: string,
+  defaultWin: string,
+  volume: number = 1
+): void {
+  const v = clampVolume(volume);
   if (IS_WIN) {
+    // Media.SoundPlayer has no volume control; volume is ignored on Windows.
     const soundPath = WIN_SOUNDS[soundName] || defaultWin;
     const ps = `$s='${soundPath}'; if(Test-Path $s){(New-Object Media.SoundPlayer $s).PlaySync()}else{[console]::Beep(800,300)}`;
     exec(
@@ -56,15 +70,17 @@ export function playLocalSound(soundName: string, defaultMac: string, defaultWin
       { timeout: 5000 }
     );
   } else if (IS_LINUX) {
-    // paplay (PulseAudio/PipeWire) preferred; aplay (ALSA) as fallback.
-    // Mirrors the hook-side logic in hook/_lib/play.js so terminal + extension
-    // playback stay in sync on Linux.
+    // paplay --volume uses a 16-bit scale where 65536 = 100%. aplay has no
+    // matching flag, so the fallback path plays at system volume.
     const soundPath = LINUX_SOUNDS[soundName] || `${LINUX_SOUNDS_DIR}/complete.oga`;
-    exec(`paplay "${soundPath}" 2>/dev/null || aplay "${soundPath}" 2>/dev/null`, {
-      timeout: 5000,
-    });
+    const paVolume = Math.round(v * 65536);
+    exec(
+      `paplay --volume=${paVolume} "${soundPath}" 2>/dev/null || aplay "${soundPath}" 2>/dev/null`,
+      { timeout: 5000 }
+    );
   } else {
+    // afplay -v takes a 0.0–2.0+ multiplier (1.0 = system volume).
     const soundPath = MACOS_SOUNDS[soundName] || defaultMac;
-    exec(`afplay "${soundPath}"`);
+    exec(`afplay -v ${v} "${soundPath}"`);
   }
 }

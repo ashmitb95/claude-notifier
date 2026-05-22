@@ -24,8 +24,10 @@ process.stdin.on("end", () => {
   // AskUserQuestion is handled by the separate PreToolUse question hook.
   if (input.tool_name === "AskUserQuestion") process.exit(0);
 
-  const cfg = readConfig()?.needsPermission ?? {};
+  const config = readConfig();
+  const cfg = config?.needsPermission ?? {};
   const level = cfg.level ?? "sound+popup";
+  const volume = config?.soundVolume ?? 1;
 
   if (level === "off") process.exit(0);
 
@@ -35,7 +37,7 @@ process.stdin.on("end", () => {
       "/System/Library/Sounds/Glass.aiff",
       "C:\\Windows\\Media\\Windows Notify.wav"
     );
-    playSound(sound, BUNDLED_FALLBACK.needsPermission);
+    playSound(sound, BUNDLED_FALLBACK.needsPermission, volume);
   }
 
   if (level === "sound+popup" || level === "popup") {

@@ -35,8 +35,10 @@ process.stdin.on("end", () => {
   // with debounce. Otherwise fall through to direct playback.
   if (extensionOwnsCwd(cwd)) process.exit(0);
 
-  const cfg = readConfig()?.taskCompleted ?? {};
+  const config = readConfig();
+  const cfg = config?.taskCompleted ?? {};
   const level = cfg.level ?? "sound+popup";
+  const volume = config?.soundVolume ?? 1;
 
   if (level === "off") process.exit(0);
 
@@ -46,7 +48,7 @@ process.stdin.on("end", () => {
       "/System/Library/Sounds/Hero.aiff",
       "C:\\Windows\\Media\\tada.wav"
     );
-    playSound(sound, BUNDLED_FALLBACK.taskCompleted);
+    playSound(sound, BUNDLED_FALLBACK.taskCompleted, volume);
   }
 
   if (level === "sound+popup" || level === "popup") {

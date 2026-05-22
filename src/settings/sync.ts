@@ -4,9 +4,18 @@ import { HOOKS_DIR, CONFIG_FILE } from "../paths";
 import { HOOKS } from "../hooks/registry";
 import { LEVELS } from "../signals/types";
 
+export const DEFAULT_VOLUME = 1;
+
+function clampVolume(v: number): number {
+  if (!Number.isFinite(v)) return DEFAULT_VOLUME;
+  if (v < 0) return 0;
+  if (v > 2) return 2;
+  return v;
+}
+
 export function syncConfig(): void {
   const cfg = vscode.workspace.getConfiguration("claudeNotifier");
-  const config = Object.fromEntries(
+  const events = Object.fromEntries(
     HOOKS.map((hook) => [
       hook.eventKey,
       {
@@ -15,6 +24,10 @@ export function syncConfig(): void {
       },
     ])
   );
+  const config = {
+    ...events,
+    soundVolume: clampVolume(cfg.get<number>("soundVolume", DEFAULT_VOLUME)),
+  };
   try {
     fs.mkdirSync(HOOKS_DIR, { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + "\n");
@@ -35,4 +48,13 @@ export function getEventConfig(eventKey: string): { level: string; sound: string
 
 export function getEventLevel(eventKey: string): string {
   return getEventConfig(eventKey).level;
+}
+
+export function getSoundVolume(): number {
+  try {
+    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+    return clampVolume(config.soundVolume ?? DEFAULT_VOLUME);
+  } catch {
+    return DEFAULT_VOLUME;
+  }
 }

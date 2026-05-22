@@ -24,8 +24,10 @@ process.stdin.on("end", () => {
 
   if (isMuted()) process.exit(0);
 
-  const cfg = readConfig()?.asksQuestion ?? {};
+  const config = readConfig();
+  const cfg = config?.asksQuestion ?? {};
   const level = cfg.level ?? "sound+popup";
+  const volume = config?.soundVolume ?? 1;
 
   if (level === "off") process.exit(0);
 
@@ -35,7 +37,7 @@ process.stdin.on("end", () => {
       "/System/Library/Sounds/Funk.aiff",
       "C:\\Windows\\Media\\Windows Notify.wav"
     );
-    playSound(sound, BUNDLED_FALLBACK.asksQuestion);
+    playSound(sound, BUNDLED_FALLBACK.asksQuestion, volume);
   }
 
   if (level === "sound+popup" || level === "popup") {

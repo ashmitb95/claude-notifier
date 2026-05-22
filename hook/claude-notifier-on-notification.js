@@ -3,7 +3,7 @@
 // Plays the "needs input" sound when Claude posts a permission_prompt
 // notification. Uses fixed sound (not config-driven) — this hook fires
 // before the PermissionRequest hook can react.
-const { isMuted } = require("./_lib/config");
+const { isMuted, readConfig } = require("./_lib/config");
 const { resolveSound, BUNDLED_FALLBACK } = require("./_lib/sounds");
 const { playSound } = require("./_lib/play");
 const { showNotification } = require("./_lib/notify");
@@ -30,7 +30,8 @@ process.stdin.on("end", () => {
     "/System/Library/Sounds/Glass.aiff",
     "C:\\Windows\\Media\\Windows Notify.wav"
   );
-  playSound(sound, BUNDLED_FALLBACK.needsPermission);
+  const volume = readConfig()?.soundVolume ?? 1;
+  playSound(sound, BUNDLED_FALLBACK.needsPermission, volume);
 
   const message = input.message || "Claude needs your permission.";
   showNotification(message);
