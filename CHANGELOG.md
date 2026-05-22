@@ -1,11 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## [3.1.0] - 2026-05-23
 
 ### Added
 
 - Click-to-focus the originating Claude session. When a Stop notification is clicked (via `terminal-notifier` on macOS) or the **Reveal** action button on the VS Code toast, the extension now reveals the specific integrated terminal or editor panel where Claude was running — not just the workspace window. Implementation: Stop hooks capture the ancestor PID chain on macOS/Linux and send it in the v2 signal; the extension matches a terminal's `processId` against the chain and falls back to `claude-vscode.editor.open <session_id>` for editor panels. Original feature idea by [@marco-lavagnino](https://github.com/marco-lavagnino) in [#15](https://github.com/ashmitb95/claude-notifier/pull/15).
 - Permission and question macOS notifications are now clickable. Previously, clicking either notification opened Script Editor (they were emitted through `osascript`). They now go through `terminal-notifier` like the Stop notification: clicks run `code <cwd>` to focus the matching VS Code window — falling back to `osascript activate` when the `code` CLI isn't on `PATH` — and write the firing cwd to `~/.claude/hooks/claude-notifier-focus` so the focus watcher reveals the originating Claude tab when one was previously recorded.
+- Native Linux sound playback for the extension's own `done` notification. The in-extension `playLocalSound` (used when a VS Code window owns the session's cwd) previously handled only macOS and Windows, so the `done` chime fell silent on Linux; it now uses `paplay` (with `aplay` as fallback) and maps the sound presets to freedesktop sounds, matching the hook-side Linux behavior from 2.4.0. Contributed by [@collectifweb](https://github.com/collectifweb). ([#37](https://github.com/ashmitb95/claude-notifier/pull/37))
+
+### Fixed
+
+- Clicking a `done` notification (the macOS banner or the **Reveal** toast action) no longer opens a duplicate Claude chat tab. The `claude-vscode.editor.open <session_id>` fallback duplicated the tab because the Anthropic extension restores chat panels after a window reload without a session id, so the lookup always missed and a fresh tab was created. Chat sessions now rely on the existing window-forward step; integrated terminals still focus via PID match. ([#39](https://github.com/ashmitb95/claude-notifier/pull/39))
 
 ## [3.0.0] - 2026-05-16
 
