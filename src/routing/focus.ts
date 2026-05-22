@@ -26,10 +26,14 @@ export function resetDoneMemory(): void {
 }
 
 /**
- * Reveal the originating Claude session: match the captured ancestor PIDs
- * against integrated terminals first, then fall back to asking the Anthropic
- * Claude Code extension to open the editor panel for the session id.
- * Returns true when something was revealed.
+ * Reveal the originating Claude session by matching the captured ancestor PIDs
+ * against integrated terminals. Returns true when a terminal was revealed.
+ *
+ * Chat (webview) sessions intentionally have no reveal action here: the click
+ * pipeline already brings the VS Code window forward, which shows the open chat.
+ * The Anthropic `claude-vscode.editor.open` command was tried previously but it
+ * opens a *new* tab whenever its in-memory session map misses, duplicating the
+ * already-open chat instead of focusing it.
  */
 export async function revealClaudeTab(ctx: DoneContext | null): Promise<boolean> {
   if (!ctx) return false;
@@ -41,15 +45,6 @@ export async function revealClaudeTab(ctx: DoneContext | null): Promise<boolean>
         term.show();
         return true;
       }
-    }
-  }
-
-  if (ctx.sessionId) {
-    try {
-      await vscode.commands.executeCommand("claude-vscode.editor.open", ctx.sessionId);
-      return true;
-    } catch {
-      // Anthropic Claude Code extension not installed or command not registered.
     }
   }
 

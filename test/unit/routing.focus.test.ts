@@ -76,7 +76,7 @@ describe("routing/focus — revealClaudeTab", () => {
     expect(otherTerm.show).not.toHaveBeenCalled();
   });
 
-  it("falls back to claude-vscode.editor.open when no terminal matches", async () => {
+  it("never opens a new editor tab when no terminal matches (chat session)", async () => {
     (vscode.window as { terminals: unknown[] }).terminals = [fakeTerminal(9999)];
     const spy = vi.spyOn(vscode.commands, "executeCommand").mockResolvedValue(undefined);
 
@@ -86,30 +86,11 @@ describe("routing/focus — revealClaudeTab", () => {
       cwd: "/x",
     });
 
-    expect(result).toBe(true);
-    expect(spy).toHaveBeenCalledWith("claude-vscode.editor.open", "session-abc");
-  });
-
-  it("skips the editor-open fallback when sessionId is null", async () => {
-    (vscode.window as { terminals: unknown[] }).terminals = [fakeTerminal(9999)];
-    const spy = vi.spyOn(vscode.commands, "executeCommand").mockResolvedValue(undefined);
-
-    const result = await revealClaudeTab({ sessionId: null, pidChain: [1001], cwd: "/x" });
-
     expect(result).toBe(false);
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("returns false when the editor-open command rejects", async () => {
-    (vscode.window as { terminals: unknown[] }).terminals = [];
-    vi.spyOn(vscode.commands, "executeCommand").mockRejectedValue(new Error("not registered"));
-
-    const result = await revealClaudeTab({ sessionId: "abc", pidChain: [], cwd: "/x" });
-
-    expect(result).toBe(false);
-  });
-
-  it("tries terminals before falling back to the editor command", async () => {
+  it("focuses the terminal without invoking any command", async () => {
     const matchingTerm = fakeTerminal(1001);
     (vscode.window as { terminals: unknown[] }).terminals = [matchingTerm];
     const spy = vi.spyOn(vscode.commands, "executeCommand").mockResolvedValue(undefined);
@@ -125,7 +106,10 @@ describe("routing/focus — revealClaudeTab", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("returns false when pid chain is empty and no sessionId", async () => {
+  it("returns false when pid chain is empty", async () => {
+    const spy = vi.spyOn(vscode.commands, "executeCommand").mockResolvedValue(undefined);
+    expect(await revealClaudeTab({ sessionId: "abc", pidChain: [], cwd: "/x" })).toBe(false);
     expect(await revealClaudeTab({ sessionId: null, pidChain: [], cwd: "/x" })).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
   });
 });
