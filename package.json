@@ -202,8 +202,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^20.0.0",
-    "@types/vscode": "^1.85.0",
+    "@types/node": "^25.9.1",
+    "@types/vscode": "^1.120.0",
     "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
