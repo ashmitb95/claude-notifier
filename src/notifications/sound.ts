@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import { IS_WIN } from "../paths";
+import { IS_WIN, IS_LINUX } from "../paths";
 
 export const MACOS_SOUNDS: Record<string, string> = {
   Basso: "/System/Library/Sounds/Basso.aiff",
@@ -29,6 +29,24 @@ export const WIN_SOUNDS: Record<string, string> = {
   "Windows Background": "C:\\Windows\\Media\\Windows Background.wav",
 };
 
+export const LINUX_SOUNDS_DIR = "/usr/share/sounds/freedesktop/stereo";
+export const LINUX_SOUNDS: Record<string, string> = {
+  Basso: `${LINUX_SOUNDS_DIR}/dialog-warning.oga`,
+  Blow: `${LINUX_SOUNDS_DIR}/service-logout.oga`,
+  Bottle: `${LINUX_SOUNDS_DIR}/bell.oga`,
+  Frog: `${LINUX_SOUNDS_DIR}/message-new-instant.oga`,
+  Funk: `${LINUX_SOUNDS_DIR}/message-new-instant.oga`,
+  Glass: `${LINUX_SOUNDS_DIR}/bell.oga`,
+  Hero: `${LINUX_SOUNDS_DIR}/complete.oga`,
+  Morse: `${LINUX_SOUNDS_DIR}/message.oga`,
+  Ping: `${LINUX_SOUNDS_DIR}/message.oga`,
+  Pop: `${LINUX_SOUNDS_DIR}/dialog-information.oga`,
+  Purr: `${LINUX_SOUNDS_DIR}/service-login.oga`,
+  Sosumi: `${LINUX_SOUNDS_DIR}/dialog-warning.oga`,
+  Submarine: `${LINUX_SOUNDS_DIR}/alarm-clock-elapsed.oga`,
+  Tink: `${LINUX_SOUNDS_DIR}/bell.oga`,
+};
+
 export function playLocalSound(soundName: string, defaultMac: string, defaultWin: string): void {
   if (IS_WIN) {
     const soundPath = WIN_SOUNDS[soundName] || defaultWin;
@@ -37,6 +55,14 @@ export function playLocalSound(soundName: string, defaultMac: string, defaultWin
       `powershell -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`,
       { timeout: 5000 }
     );
+  } else if (IS_LINUX) {
+    // paplay (PulseAudio/PipeWire) preferred; aplay (ALSA) as fallback.
+    // Mirrors the hook-side logic in hook/_lib/play.js so terminal + extension
+    // playback stay in sync on Linux.
+    const soundPath = LINUX_SOUNDS[soundName] || `${LINUX_SOUNDS_DIR}/complete.oga`;
+    exec(`paplay "${soundPath}" 2>/dev/null || aplay "${soundPath}" 2>/dev/null`, {
+      timeout: 5000,
+    });
   } else {
     const soundPath = MACOS_SOUNDS[soundName] || defaultMac;
     exec(`afplay "${soundPath}"`);

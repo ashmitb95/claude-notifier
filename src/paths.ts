@@ -17,4 +17,5 @@ export const OWN_PID_FILE = path.join(ACTIVE_DIR, String(process.pid));
 
 export const IS_WIN = process.platform === "win32";
 export const IS_MAC = process.platform === "darwin";
+export const IS_LINUX = process.platform === "linux";
 export const HOOK_EXT = IS_WIN ? ".ps1" : ".js";
