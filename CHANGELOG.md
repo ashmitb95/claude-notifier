@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.2.0] - 2026-05-23
+
+### Added
+
+- Configurable sound volume via a global `claudeNotifier.soundVolume` setting (0–2, default 1), honored by both the extension's `playLocalSound()` and the hook scripts' `playSound()`. Applied through `paplay --volume` on Linux and `afplay -v` on macOS; Windows plays at system volume (`Media.SoundPlayer` exposes no volume API). Contributed by [@collectifweb](https://github.com/collectifweb). ([#38](https://github.com/ashmitb95/claude-notifier/pull/38))
+
 ## [3.1.0] - 2026-05-23
 
 ### Added
