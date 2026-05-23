@@ -1,5 +1,6 @@
 import { exec } from "child_process";
 import { IS_WIN, IS_LINUX } from "../paths";
+import { clampVolume, DEFAULT_VOLUME } from "../settings/sync";
 
 export const MACOS_SOUNDS: Record<string, string> = {
   Basso: "/System/Library/Sounds/Basso.aiff",
@@ -47,18 +48,11 @@ export const LINUX_SOUNDS: Record<string, string> = {
   Tink: `${LINUX_SOUNDS_DIR}/bell.oga`,
 };
 
-function clampVolume(v: number | undefined): number {
-  if (v === undefined || !Number.isFinite(v)) return 1;
-  if (v < 0) return 0;
-  if (v > 2) return 2;
-  return v;
-}
-
 export function playLocalSound(
   soundName: string,
   defaultMac: string,
   defaultWin: string,
-  volume: number = 1
+  volume: number = DEFAULT_VOLUME
 ): void {
   const v = clampVolume(volume);
   if (IS_WIN) {

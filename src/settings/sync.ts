@@ -5,11 +5,13 @@ import { HOOKS } from "../hooks/registry";
 import { LEVELS } from "../signals/types";
 
 export const DEFAULT_VOLUME = 1;
+export const MIN_VOLUME = 0;
+export const MAX_VOLUME = 2;
 
-function clampVolume(v: number): number {
-  if (!Number.isFinite(v)) return DEFAULT_VOLUME;
-  if (v < 0) return 0;
-  if (v > 2) return 2;
+export function clampVolume(v: number | undefined): number {
+  if (v === undefined || !Number.isFinite(v)) return DEFAULT_VOLUME;
+  if (v < MIN_VOLUME) return MIN_VOLUME;
+  if (v > MAX_VOLUME) return MAX_VOLUME;
   return v;
 }
 
