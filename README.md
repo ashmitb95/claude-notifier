@@ -86,7 +86,33 @@ Open **Settings** → search **"Claude Notifier"** (`Cmd+,` / `Ctrl+,`), or add 
 - Windows: Windows Notify, tada, chimes, chord, ding, notify, ringin, Windows Background
 - Linux: same names as macOS — each is mapped to a freedesktop XDG sound under `/usr/share/sounds/freedesktop/stereo/`
 
-The global **mute toggle** (status bar speaker icon or `Claude Notifier: Toggle Sound` in the command palette) overrides all per-event settings.
+The global **mute toggle** lives inside the status-bar control panel (see below) and is also exposed as `Claude Notifier: Toggle Sound` in the command palette. Mute overrides all per-event settings.
+
+### Status-bar control panel
+
+Hover the **Claude** entry in the status bar to open the control panel. It's anchored above the icon and sticky — move into it to click. Available actions:
+
+- Set volume to 0 / 25 / 50 / 75 / 100 / 150 / 200%.
+- Mute / unmute.
+- Set the minimum task duration threshold (see below).
+- Preview each event's current sound at the configured volume.
+- Change each event's sound preset with arrow-key audition (preview-on-highlight).
+- Open the full settings page.
+
+Clicking the status-bar item itself does nothing — every action lives inside the hover panel.
+
+The picker and preview are also exposed as command-palette entries:
+
+- `Claude Notifier: Choose Sound…`
+- `Claude Notifier: Preview Sound…`
+
+### Minimum task duration threshold
+
+`claudeNotifier.minTaskDurationThreshold` (seconds, default `0`)
+
+When `> 0`, notification sounds and popups are suppressed for any task that completes in less than this many seconds. Counted from the moment you submit the prompt. Set to `0` to disable (the default).
+
+Useful when you're actively watching the IDE and don't need audio for sub-second roundtrips — set it to e.g. `10` and you'll only hear audio for longer-running work. Per-session marker files keep parallel Claude sessions (multiple terminals or VS Code windows) independent — each session times its own threshold.
 
 ## How it works
 

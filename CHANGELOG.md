@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.3.0] - 2026-05-24
+
+### Added
+
+- **Status-bar control panel.** Hovering the **Claude** entry in the status bar now opens an anchored, Copilot-style panel with: volume presets (0/25/50/75/100/150/200%), mute toggle, minimum-task-duration threshold control, and a per-event row for each notification (Task completed / Permission / Question) with `$(play) Preview` and `$(chevron-right) Change` links. The panel is built from a `MarkdownString` with `isTrusted` + `supportHtml` + `supportThemeIcons`; every interactive element is a registered VS Code command. Click on the status bar item itself is now a no-op — mute lives inside the panel.
+- **`claudeNotifier.minTaskDurationThreshold` setting** (seconds, default `0` = off, max `3600`). When `> 0`, notification sounds and popups are suppressed for tasks that complete in less than this many seconds. The timer starts at prompt submission (`UserPromptSubmit` hook). Per-session marker files in `~/.claude/hooks/claude-notifier-task-start/` keep parallel Claude sessions across terminals and VS Code windows independent. Suppression applies to all five sound-emission paths: Stop hook fallback, dispatch "done" (local + remote), Permission hook, and Question hook. Fail-open: if the marker is missing or unreadable, the sound plays. Closes [#1](https://github.com/ashmitb95/claude-notifier/issues/1).
+- **`Claude Notifier: Choose Sound…`** command (`claudeNotifier.pickEventSound`) — opens a QuickPick of platform-appropriate presets with preview-on-highlight (arrow through to audition each sound at the configured volume). Inspired by the equivalent UX in [dimokol/claude-notifications](https://github.com/dimokol/claude-notifications).
+- **`Claude Notifier: Preview Sound…`** command (`claudeNotifier.previewEventSound`) — plays the configured sound for a chosen event at the configured volume.
+- **`Claude Notifier: Set Volume`**, **`Set Threshold`**, **`Open Settings`** commands — backing the panel's links, also exposed in the command palette.
+
+### Changed
+
+- Clicking the status bar item no longer toggles mute. The toggle is now a link inside the hover panel. The previous "Claude Notifier sound: ON/OFF" toast is removed; state is conveyed by the status-bar text and the panel header.
+- Stage idle-reset (30 min) now also deletes the session's task-start marker file.
+- Extension activation sweeps task-start markers older than 24 h; uninstall removes the whole marker directory.
+
+### Internal
+
+- New `src/signals/task-timer.ts` and `hook/_lib/task-timer.js` provide `recordTaskStart`, `getStartTime`, `shouldSuppressForThreshold` (+ `deleteMarker` / `cleanupStaleMarkers` on the extension side). PowerShell parity in `hook/_lib.ps1`.
+- New `src/ui/panel-markdown.ts` is a pure function that turns the panel state into a `MarkdownString` — no side effects, unit-tested.
+- New `src/ui/sound-picker.ts` houses the QuickPick logic and the `previewEventSound` helper.
+- `src/signals/dispatch.ts` now consults `getMinTaskDurationThreshold` before playing the "done" sound (local or remote) and before showing the popup.
+- 19 new tests added (covering helper semantics, threshold suppression matrix on dispatch, idle-reset marker cleanup, panel markdown rendering, sound-picker preset listing, prompt-hook marker write, and per-hook signal-write invariants under suppression). Full suite: ~191 tests.
+
 ## [3.2.0] - 2026-05-23
 
 ### Added
