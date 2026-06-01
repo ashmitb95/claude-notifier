@@ -123,15 +123,32 @@ When `> 0`, notification sounds and popups are suppressed for any task that comp
 
 Useful when you're actively watching the IDE and don't need audio for sub-second roundtrips — set it to e.g. `10` and you'll only hear audio for longer-running work. Per-session marker files keep parallel Claude sessions (multiple terminals or VS Code windows) independent — each session times its own threshold.
 
+### Subagent handling
+
+Claude Code emits an `agent_id` field on every hook payload that fires from inside a `Task` subagent. Two settings use this:
+
+`claudeNotifier.suppressSubagentInteractions` *(boolean, default `true`)*
+
+When true, permission and question hooks that originate from a subagent are silenced — no sound, no OS banner. The main agent's own permission and question prompts still notify normally. This affects **only the notifier's sound and popup**; the actual approve/deny dialog and question UI in Claude Code's chat are untouched.
+
+`claudeNotifier.subagentCompleted.level` *(default `off`)*
+
+A dedicated `SubagentStop` hook fires when a `Task` subagent finishes. The level defaults to `off`, so subagent completions are silent unless you opt in. Configurable like the other events:
+
+- `claudeNotifier.subagentCompleted.level`: `sound+popup` | `sound` | `popup` | `off`
+- `claudeNotifier.subagentCompleted.sound`: a sound preset (default `Pop`)
+
 ## How it works
 
-Three [Claude Code hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) are registered:
+Five [Claude Code hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) are registered:
 
-| Hook                           | Trigger                    |
-| ------------------------------ | -------------------------- |
-| `Stop`                         | Claude finishes responding |
-| `PermissionRequest`            | Claude needs tool approval |
-| `PreToolUse` (AskUserQuestion) | Claude asks a question     |
+| Hook                           | Trigger                                                                |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `Stop`                         | Claude finishes responding                                             |
+| `PermissionRequest`            | Claude needs tool approval                                             |
+| `PreToolUse` (AskUserQuestion) | Claude asks a question                                                 |
+| `UserPromptSubmit`             | You submit a prompt (coordination-only — no sound, no popup)           |
+| `SubagentStop`                 | A `Task` subagent finishes (off by default; opt in to get notified)    |
 
 Each hook reads `~/.claude/hooks/claude-notifier-config.json` (synced from VSCode settings) to determine which sound to play and whether to show notifications.
 
