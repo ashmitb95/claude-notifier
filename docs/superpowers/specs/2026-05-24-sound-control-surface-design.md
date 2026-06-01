@@ -160,7 +160,7 @@ If the marker file is missing or unreadable, the threshold check returns "don't 
 
 ### Module structure
 
-- `src/signals/task-timer.ts` (new) — `recordTaskStart(sessionId)`, `getElapsedMs(sessionId)`, `shouldSuppressForThreshold(sessionId, thresholdSec)`, `cleanupStaleMarkers(maxAgeMs)`, `deleteMarker(sessionId)`.
+- `src/signals/task-timer.ts` (new) — `recordTaskStart(sessionId)`, `getStartTime(sessionId)`, `shouldSuppressForThreshold(sessionId, thresholdSec)`, `cleanupStaleMarkers(maxAgeMs)`, `deleteMarker(sessionId)`.
 - `hook/_lib/task-timer.js` (new) — same surface, file-backed, shared by all hook scripts.
 - `hook/_lib.ps1` (modify) — `_lib.ps1` is a single file, not a directory. Add `Save-NotifierTaskStart`, `Get-NotifierTaskElapsed`, `Test-NotifierThresholdSuppress` functions inline.
 - `claude-notifier-on-prompt.js` (+`.ps1`) — calls `recordTaskStart` after `writeSignal`.
