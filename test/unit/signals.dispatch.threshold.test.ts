@@ -9,7 +9,6 @@ let tmpTaskDir: string;
 let signalFile: string;
 let configFile: string;
 let playLocalCalls: number;
-let playRemoteCalls: number;
 let popupCalls: number;
 
 vi.mock("vscode", () => ({
@@ -34,9 +33,7 @@ vi.mock("../../src/notifications/sound", () => ({
 }));
 
 vi.mock("../../src/notifications/remote", () => ({
-  playRemoteSound: () => {
-    playRemoteCalls++;
-  },
+  playRemoteSound: () => {},
 }));
 
 vi.mock("../../src/notifications/local", () => ({
@@ -65,7 +62,6 @@ beforeEach(() => {
   process.env.HOME = tmpRoot;
   process.env.USERPROFILE = tmpRoot;
   playLocalCalls = 0;
-  playRemoteCalls = 0;
   popupCalls = 0;
 });
 

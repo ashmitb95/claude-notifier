@@ -105,7 +105,7 @@ describe("task-timer (extension side)", () => {
     });
 
     it("returns false when elapsed >= threshold", async () => {
-      const { recordTaskStart, shouldSuppressForThreshold } = await loadModule();
+      const { shouldSuppressForThreshold } = await loadModule();
       // Write a marker dated 20s ago.
       fs.mkdirSync(tmpTaskDir, { recursive: true });
       fs.writeFileSync(

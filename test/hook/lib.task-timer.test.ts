@@ -11,12 +11,15 @@ let tmpTaskDir: string;
 let originalHome: string | undefined;
 let originalProfile: string | undefined;
 
-async function loadHookLib() {
+function loadHookLib() {
   vi.resetModules();
-  // hook/_lib/task-timer.js is CommonJS; load through require.
+  // hook/_lib/task-timer.js is CommonJS; load through require with cache
+  // busting so each test re-resolves TASK_START_DIR against the current HOME.
+  /* eslint-disable @typescript-eslint/no-require-imports */
   delete require.cache[require.resolve(path.join(HOOK_LIB_DIR, "task-timer.js"))];
   delete require.cache[require.resolve(path.join(HOOK_LIB_DIR, "paths.js"))];
   return require(path.join(HOOK_LIB_DIR, "task-timer.js"));
+  /* eslint-enable @typescript-eslint/no-require-imports */
 }
 
 beforeEach(() => {
