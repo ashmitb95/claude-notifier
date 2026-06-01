@@ -11,7 +11,12 @@ if ($data.tool_name -ne 'AskUserQuestion') { exit 0 }
 
 if (Test-NotifierMuted) { exit 0 }
 
-$cfg = (Read-NotifierConfig).asksQuestion
+# Subagent-originated questions: silent exit when suppression is on (default).
+$conf = Read-NotifierConfig
+$suppressSubagent = if ($null -ne $conf.suppressSubagentInteractions) { [bool]$conf.suppressSubagentInteractions } else { $true }
+if ($suppressSubagent -and $data.agent_id) { exit 0 }
+
+$cfg = $conf.asksQuestion
 $level = if ($cfg.level) { $cfg.level } else { 'sound+popup' }
 
 if ($level -eq 'off') { exit 0 }

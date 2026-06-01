@@ -11,7 +11,13 @@ if (Test-NotifierMuted) { exit 0 }
 # AskUserQuestion is handled by the separate PreToolUse question hook.
 if ($data.tool_name -eq 'AskUserQuestion') { exit 0 }
 
-$cfg = (Read-NotifierConfig).needsPermission
+# Subagent-originated permission requests: silent exit when suppression is on
+# (default). agent_id is present only when the hook fires inside a subagent.
+$conf = Read-NotifierConfig
+$suppressSubagent = if ($null -ne $conf.suppressSubagentInteractions) { [bool]$conf.suppressSubagentInteractions } else { $true }
+if ($suppressSubagent -and $data.agent_id) { exit 0 }
+
+$cfg = $conf.needsPermission
 $level = if ($cfg.level) { $cfg.level } else { 'sound+popup' }
 
 if ($level -eq 'off') { exit 0 }

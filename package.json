@@ -251,6 +251,11 @@
           "maximum": 3600,
           "description": "Suppress notification sounds and popups for tasks that complete in less than this many seconds. Counted from when you submit the prompt. 0 disables the feature (all notifications fire normally)."
         },
+        "claudeNotifier.suppressSubagentInteractions": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, permission and question hooks fired from inside a Task subagent (detected via the agent_id field in the hook payload) are silenced — no sound, no popup. The main agent's own permission/question prompts still fire normally. Useful in auto-accept mode where subagent prompts are noise."
+        },
         "claudeNotifier.doneDebounceMs": {
           "type": "number",
           "default": 2000,

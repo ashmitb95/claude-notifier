@@ -42,6 +42,7 @@ export function syncConfig(): void {
     minTaskDurationThreshold: clampThreshold(
       cfg.get<number>("minTaskDurationThreshold", DEFAULT_THRESHOLD)
     ),
+    suppressSubagentInteractions: cfg.get<boolean>("suppressSubagentInteractions", true),
   };
   try {
     fs.mkdirSync(HOOKS_DIR, { recursive: true });

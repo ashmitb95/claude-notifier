@@ -26,6 +26,12 @@ process.stdin.on("end", () => {
   if (isMuted()) process.exit(0);
 
   const config = readConfig();
+
+  // Subagent-originated questions: exit silently when suppression is on so
+  // neither the hook nor the extension popup fires. See on-permission.js.
+  const suppressSubagent = config?.suppressSubagentInteractions !== false;
+  if (suppressSubagent && input.agent_id) process.exit(0);
+
   const cfg = config?.asksQuestion ?? {};
   const level = cfg.level ?? "sound+popup";
   const volume = config?.soundVolume ?? 1;
