@@ -11,6 +11,7 @@ const { extensionOwnsCwd } = require("./_lib/active");
 const { writeSignal } = require("./_lib/signal");
 const { getAncestorPids } = require("./_lib/pid");
 const { buildClickAction, GENERIC_ACTIVATE } = require("./_lib/click");
+const { shouldSuppressForThreshold } = require("./_lib/task-timer");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -41,6 +42,9 @@ process.stdin.on("end", () => {
   const volume = config?.soundVolume ?? 1;
 
   if (level === "off") process.exit(0);
+
+  const threshold = config?.minTaskDurationThreshold ?? 0;
+  if (shouldSuppressForThreshold(input.session_id, threshold)) process.exit(0);
 
   if (level === "sound+popup" || level === "sound") {
     const sound = resolveSound(
