@@ -66,6 +66,14 @@ export async function setThreshold(): Promise<void> {
   await cfg.update("minTaskDurationThreshold", Number(input), vscode.ConfigurationTarget.Global);
 }
 
+export async function adjustThreshold(delta: number): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration("claudeNotifier");
+  const current = cfg.get<number>("minTaskDurationThreshold", 0);
+  const next = Math.max(0, Math.min(3600, current + delta));
+  if (next === current) return;
+  await cfg.update("minTaskDurationThreshold", next, vscode.ConfigurationTarget.Global);
+}
+
 export async function openSettings(): Promise<void> {
   await vscode.commands.executeCommand(
     "workbench.action.openSettings",

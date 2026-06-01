@@ -34,7 +34,7 @@ describe("buildPanelMarkdown", () => {
     expect(md.supportThemeIcons).toBe(true);
   });
 
-  it("includes a setVolume command link for each preset", () => {
+  it("includes a setVolume command link for each preset (0/25/50/75/100/150/200)", () => {
     const md = buildPanelMarkdown(baseState).value;
     for (const v of [0, 0.25, 0.5, 0.75, 1, 1.5, 2]) {
       expect(md).toContain(`command:claudeNotifier.setVolume?${encodeURIComponent(JSON.stringify([v]))}`);
@@ -85,5 +85,36 @@ describe("buildPanelMarkdown", () => {
   it("includes the setThreshold command", () => {
     const md = buildPanelMarkdown(baseState).value;
     expect(md).toContain("command:claudeNotifier.setThreshold");
+  });
+
+  it("renders inline +/- steppers for threshold", () => {
+    const md = buildPanelMarkdown({ ...baseState, threshold: 10 }).value;
+    expect(md).toContain(
+      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([-5]))}`
+    );
+    expect(md).toContain(
+      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([5]))}`
+    );
+  });
+
+  it("disables the decrement stepper when threshold is already 0", () => {
+    const md = buildPanelMarkdown({ ...baseState, threshold: 0 }).value;
+    // No clickable link for decrement (would yield an invalid negative value).
+    expect(md).not.toContain(
+      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([-5]))}`
+    );
+    expect(md).toContain(
+      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([5]))}`
+    );
+  });
+
+  it("disables the increment stepper when threshold is at max (3600)", () => {
+    const md = buildPanelMarkdown({ ...baseState, threshold: 3600 }).value;
+    expect(md).not.toContain(
+      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([5]))}`
+    );
+    expect(md).toContain(
+      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([-5]))}`
+    );
   });
 });

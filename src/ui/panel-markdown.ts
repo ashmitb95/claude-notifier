@@ -14,24 +14,15 @@ export interface PanelState {
 }
 
 const VOLUME_PRESETS = [0, 0.25, 0.5, 0.75, 1, 1.5, 2] as const;
+export const THRESHOLD_STEP_SEC = 5;
+export const THRESHOLD_MAX_SEC = 3600;
 
 function commandUri(command: string, args?: unknown[]): string {
   if (!args || args.length === 0) return `command:${command}`;
   return `command:${command}?${encodeURIComponent(JSON.stringify(args))}`;
 }
 
-function volumeBar(value: number): string {
-  if (value === 0) return "○○○○○○○○";
-  if (value <= 0.25) return "●●○○○○○○";
-  if (value <= 0.5) return "●●●●○○○○";
-  if (value <= 0.75) return "●●●●●●○○";
-  if (value <= 1) return "●●●●●●●●";
-  if (value <= 1.5) return "●●●●●●●●+";
-  return "●●●●●●●●++";
-}
-
 function volumeLabel(value: number): string {
-  if (value === 0) return "0% (mute)";
   return `${Math.round(value * 100)}%`;
 }
 
@@ -59,22 +50,32 @@ export function buildPanelMarkdown(state: PanelState): vscode.MarkdownString {
   md.appendMarkdown(`${headerIcon} **Claude Notifier — ${headerLabel}**\n\n`);
   md.appendMarkdown(`---\n\n`);
 
-  md.appendMarkdown(`**Volume**\n\n`);
   const cur = currentPreset(state.volume);
-  for (const v of VOLUME_PRESETS) {
-    const marker = v === cur ? "$(check) " : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-    const link = commandUri("claudeNotifier.setVolume", [v]);
-    md.appendMarkdown(`${marker}[${volumeBar(v)} ${volumeLabel(v)}](${link})\n\n`);
-  }
+  const buttons = VOLUME_PRESETS.map((v) => {
+    const label = v === cur ? `$(check) ${volumeLabel(v)}` : volumeLabel(v);
+    return `[\`  ${label}  \`](${commandUri("claudeNotifier.setVolume", [v])})`;
+  }).join(" &nbsp; ");
+  md.appendMarkdown(`**Volume:** &nbsp; ${buttons}\n\n`);
 
-  const muteLabel = state.muted ? "Unmute" : "Mute";
+  const muteIcon = state.muted ? "$(unmute)" : "$(mute)";
+  const muteLabel = state.muted ? "Unmute sound" : "Mute sound";
   md.appendMarkdown(
-    `[${state.muted ? "$(unmute)" : "$(mute)"} ${muteLabel}](${commandUri("claudeNotifier.toggleSound")})\n\n`
+    `> ## [${muteIcon} ${muteLabel}](${commandUri("claudeNotifier.toggleSound")})\n\n`
   );
 
   const thresholdText = state.threshold > 0 ? `${state.threshold}s` : "off";
+  const decDelta = state.threshold > 0 ? -THRESHOLD_STEP_SEC : 0;
+  const incDelta = state.threshold < THRESHOLD_MAX_SEC ? THRESHOLD_STEP_SEC : 0;
+  const decLink =
+    decDelta === 0
+      ? "$(remove)"
+      : `[$(remove)](${commandUri("claudeNotifier.adjustThreshold", [decDelta])})`;
+  const incLink =
+    incDelta === 0
+      ? "$(add)"
+      : `[$(add)](${commandUri("claudeNotifier.adjustThreshold", [incDelta])})`;
   md.appendMarkdown(
-    `**Min task duration:** ${thresholdText} &nbsp; [Change…](${commandUri("claudeNotifier.setThreshold")})\n\n`
+    `**Min task duration:** ${decLink} &nbsp;**${thresholdText}**&nbsp; ${incLink} &nbsp; [Change…](${commandUri("claudeNotifier.setThreshold")})\n\n`
   );
 
   md.appendMarkdown(`---\n\n`);
