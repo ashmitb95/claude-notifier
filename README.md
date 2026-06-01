@@ -8,7 +8,7 @@ Stop watching the screen — go grab a coffee and let Claude ping you when it ne
 
 Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code — on **macOS**, **Windows**, **WSL**, and **Linux**.
 
-## Highlights
+## What's new — 3.3.0
 
 ![Hover the Claude entry in the status bar to open the control panel](media/popup-screen.png)
 
