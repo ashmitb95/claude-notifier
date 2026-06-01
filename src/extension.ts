@@ -47,6 +47,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("claudeNotifier.setVolume", (v: number) => setVolume(v)),
     vscode.commands.registerCommand("claudeNotifier.setThreshold", () => setThreshold()),
     vscode.commands.registerCommand("claudeNotifier.openSettings", () => openSettings()),
+    // Private: satisfies VS Code's status bar item command requirement so the
+    // hover tooltip fires (#75909). Not contributed in package.json — invisible
+    // in the command palette. Click on the icon does nothing visible.
+    vscode.commands.registerCommand("claudeNotifier.statusBarNoop", () => {}),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("claudeNotifier")) {
         syncConfig();
