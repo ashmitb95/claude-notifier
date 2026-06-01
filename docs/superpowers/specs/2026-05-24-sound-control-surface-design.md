@@ -239,9 +239,4 @@ Also expose `claudeNotifier.pickEventSound` and `claudeNotifier.previewEventSoun
 - Webview-based panel (would be the only path to a true draggable slider; not worth the weight).
 - Per-event mute toggles in the panel.
 - Sound import / custom sound files.
-- Changing the volume scale from 0–2 to 0–100. `dimokol/claude-notifications` uses 0–100; we keep 0–2 because it matches `afplay -v`'s native scale and changing it would silently re-interpret every existing user's configured volume.
-
-## Comparable extensions (for positioning, not parity)
-
-- `dimokol/claude-notifications` — overlaps on sound + OS notifications + terminal focus + per-event sound picker with preview. **Does not have a minimum-task-duration threshold** — Layer 2 is the user-facing differentiator for v3.3.0. Their sound-picker's preview-on-highlight pattern is borrowed for Layer 3.
-- `erdemgiray/claude-code-notifier`, `nelzomal/cc-ring` — exist; not analyzed in depth. Threshold remains novel within the cluster.
+- Changing the volume scale from 0–2 to 0–100. We keep 0–2 because it matches `afplay -v`'s native scale and changing it would silently re-interpret every existing user's configured volume.
