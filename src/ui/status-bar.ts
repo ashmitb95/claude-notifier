@@ -1,18 +1,32 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 import { MUTE_FLAG } from "../paths";
+import { buildPanelMarkdown, PanelEvent } from "./panel-markdown";
 
 let statusBarItem: vscode.StatusBarItem;
 let soundEnabled = true;
+let configListener: vscode.Disposable | null = null;
+
+const EVENT_DEFS: Array<{ key: PanelEvent["key"]; label: string }> = [
+  { key: "taskCompleted", label: "Task completed" },
+  { key: "needsPermission", label: "Permission" },
+  { key: "asksQuestion", label: "Question" },
+];
 
 export function createStatusBar(context: vscode.ExtensionContext): void {
   soundEnabled = !fs.existsSync(MUTE_FLAG);
 
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBarItem.command = "claudeNotifier.toggleSound";
-  updateStatusBar();
+  // No `command` is assigned — hover reveals the rich panel; the panel itself
+  // hosts the mute toggle and every other action via command-link markdown.
+  refresh();
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
+
+  configListener = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration("claudeNotifier")) refresh();
+  });
+  context.subscriptions.push(configListener);
 }
 
 export function toggleSound(): void {
@@ -24,11 +38,52 @@ export function toggleSound(): void {
   } else {
     fs.writeFileSync(MUTE_FLAG, "");
   }
-  updateStatusBar();
-  vscode.window.showInformationMessage(`Claude Notifier sound: ${soundEnabled ? "ON" : "OFF"}`);
+  refresh();
 }
 
-function updateStatusBar(): void {
+export async function setVolume(volume: number): Promise<void> {
+  await vscode.workspace
+    .getConfiguration("claudeNotifier")
+    .update("soundVolume", volume, vscode.ConfigurationTarget.Global);
+}
+
+export async function setThreshold(): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration("claudeNotifier");
+  const current = cfg.get<number>("minTaskDurationThreshold", 0);
+  const input = await vscode.window.showInputBox({
+    title: "Minimum task duration threshold",
+    prompt: "Suppress notifications for tasks shorter than this many seconds. 0 to disable.",
+    value: String(current),
+    validateInput: (v) => {
+      if (v.trim() === "") return "Enter a number of seconds (0 to disable).";
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0 || n > 3600) return "Must be between 0 and 3600.";
+      return null;
+    },
+  });
+  if (input === undefined) return;
+  await cfg.update("minTaskDurationThreshold", Number(input), vscode.ConfigurationTarget.Global);
+}
+
+export async function openSettings(): Promise<void> {
+  await vscode.commands.executeCommand(
+    "workbench.action.openSettings",
+    "@ext:singularityinc.claude-notifier"
+  );
+}
+
+function refresh(): void {
+  const cfg = vscode.workspace.getConfiguration("claudeNotifier");
+  const events: PanelEvent[] = EVENT_DEFS.map(({ key, label }) => ({
+    key,
+    label,
+    sound: cfg.get<string>(`${key}.sound`, ""),
+  }));
   statusBarItem.text = soundEnabled ? "$(unmute) Claude" : "$(mute) Claude";
-  statusBarItem.tooltip = `Claude Notifier — sound ${soundEnabled ? "on" : "off"} (click to toggle)`;
+  statusBarItem.tooltip = buildPanelMarkdown({
+    muted: !soundEnabled,
+    volume: cfg.get<number>("soundVolume", 1),
+    threshold: cfg.get<number>("minTaskDurationThreshold", 0),
+    events,
+  });
 }

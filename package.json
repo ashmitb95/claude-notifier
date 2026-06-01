@@ -36,6 +36,18 @@
       {
         "command": "claudeNotifier.pickEventSound",
         "title": "Claude Notifier: Choose Sound…"
+      },
+      {
+        "command": "claudeNotifier.setVolume",
+        "title": "Claude Notifier: Set Volume"
+      },
+      {
+        "command": "claudeNotifier.setThreshold",
+        "title": "Claude Notifier: Set Threshold"
+      },
+      {
+        "command": "claudeNotifier.openSettings",
+        "title": "Claude Notifier: Open Settings"
       }
     ],
     "configuration": {
