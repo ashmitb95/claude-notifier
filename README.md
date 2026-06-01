@@ -96,7 +96,7 @@ Open **Settings** → search **"Claude Notifier"** (`Cmd+,` / `Ctrl+,`), or add 
 - Windows: Windows Notify, tada, chimes, chord, ding, notify, ringin, Windows Background
 - Linux: same names as macOS — each is mapped to a freedesktop XDG sound under `/usr/share/sounds/freedesktop/stereo/`
 
-The global **mute toggle** lives inside the status-bar control panel (see below) and is also exposed as `Claude Notifier: Toggle Sound` in the command palette. Mute overrides all per-event settings.
+The global **mute toggle** is triggered by clicking the **Claude** entry in the status bar (the hover panel is for other actions); it's also exposed as `Claude Notifier: Toggle Sound` in the command palette. Mute overrides all per-event settings.
 
 ### Status-bar control panel
 

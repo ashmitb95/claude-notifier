@@ -21,7 +21,7 @@ $level = if ($cfg.level) { $cfg.level } else { 'sound+popup' }
 
 if ($level -eq 'off') { exit 0 }
 
-$threshold = if ((Read-NotifierConfig).minTaskDurationThreshold) { (Read-NotifierConfig).minTaskDurationThreshold } else { 0 }
+$threshold = if ($conf.minTaskDurationThreshold) { $conf.minTaskDurationThreshold } else { 0 }
 if (Test-NotifierThresholdSuppress -SessionId $data.session_id -ThresholdSec $threshold) {
     Write-NotifierSignal -Reason 'question' -SessionId $data.session_id
     exit 0

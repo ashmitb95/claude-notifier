@@ -125,6 +125,8 @@ function showNotification(reason: string, cwd: string): void {
 
   if (reason === "input") {
     const level = getEventLevel("needsPermission");
+    const threshold = getMinTaskDurationThreshold();
+    if (shouldSuppressForThreshold(lastSignalSessionId, threshold)) return;
     if (isRemote && (level === LEVELS.SOUND_POPUP || level === LEVELS.SOUND)) {
       playRemoteSound();
     }
@@ -133,6 +135,8 @@ function showNotification(reason: string, cwd: string): void {
     }
   } else if (reason === "question") {
     const level = getEventLevel("asksQuestion");
+    const threshold = getMinTaskDurationThreshold();
+    if (shouldSuppressForThreshold(lastSignalSessionId, threshold)) return;
     if (isRemote && (level === LEVELS.SOUND_POPUP || level === LEVELS.SOUND)) {
       playRemoteSound();
     }

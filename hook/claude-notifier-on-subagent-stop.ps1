@@ -17,12 +17,13 @@ Write-NotifierSignal -Reason 'subagent_done' -SessionId $data.session_id -Cwd $c
 
 if (Test-ExtensionOwnsCwd $cwd) { exit 0 }
 
-$cfg = (Read-NotifierConfig).subagentCompleted
+$conf = Read-NotifierConfig
+$cfg = $conf.subagentCompleted
 $level = if ($cfg.level) { $cfg.level } else { 'off' }
 
 if ($level -eq 'off') { exit 0 }
 
-$threshold = if ((Read-NotifierConfig).minTaskDurationThreshold) { (Read-NotifierConfig).minTaskDurationThreshold } else { 0 }
+$threshold = if ($conf.minTaskDurationThreshold) { $conf.minTaskDurationThreshold } else { 0 }
 if (Test-NotifierThresholdSuppress -SessionId $data.session_id -ThresholdSec $threshold) { exit 0 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'sound') {

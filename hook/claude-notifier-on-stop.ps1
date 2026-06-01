@@ -20,12 +20,13 @@ Write-NotifierSignal -Reason 'done' -SessionId $data.session_id -Cwd $cwd
 # with debounce. Otherwise fall through to direct playback.
 if (Test-ExtensionOwnsCwd $cwd) { exit 0 }
 
-$cfg = (Read-NotifierConfig).taskCompleted
+$conf = Read-NotifierConfig
+$cfg = $conf.taskCompleted
 $level = if ($cfg.level) { $cfg.level } else { 'sound+popup' }
 
 if ($level -eq 'off') { exit 0 }
 
-$threshold = if ((Read-NotifierConfig).minTaskDurationThreshold) { (Read-NotifierConfig).minTaskDurationThreshold } else { 0 }
+$threshold = if ($conf.minTaskDurationThreshold) { $conf.minTaskDurationThreshold } else { 0 }
 if (Test-NotifierThresholdSuppress -SessionId $data.session_id -ThresholdSec $threshold) { exit 0 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'sound') {
