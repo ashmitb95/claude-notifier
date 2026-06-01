@@ -7,13 +7,15 @@ import * as stage from "./stage";
 import { log } from "../log";
 import { getOwnWorkspaceFolders, cwdMatchesFolder } from "../routing/cwd";
 import { rememberDone, getRememberedDone, revealClaudeTab } from "../routing/focus";
-import { getEventLevel, getEventConfig, getSoundVolume } from "../settings/sync";
+import { getEventLevel, getEventConfig, getSoundVolume, getMinTaskDurationThreshold } from "../settings/sync";
 import { playLocalSound } from "../notifications/sound";
 import { showLocalNotification } from "../notifications/local";
 import { playRemoteSound } from "../notifications/remote";
+import { shouldSuppressForThreshold } from "./task-timer";
 
 let watcher: fs.FSWatcher | null = null;
 let deprecationLogged = false;
+let lastSignalSessionId: string | null = null;
 
 /**
  * Watch SIGNAL_FILE for changes and route to handleSignal(). Returns a
@@ -77,12 +79,18 @@ function handleSignal(): void {
     if (!stage.shouldFire(sessionId, reason)) {
       return;
     }
+    lastSignalSessionId = sessionId;
     showNotification(reason, cwd);
   }
 
   // doneDebounceMs is deprecated — stage dedup replaces it. Log once so
   // anyone who set the value sees what's going on.
   warnDeprecatedSettingOnce();
+}
+
+// Test-only: directly drive the signal handler. Production calls it via fs.watch.
+export function __handleSignalForTest(): void {
+  handleSignal();
 }
 
 function warnDeprecatedSettingOnce(): void {
@@ -125,6 +133,8 @@ function showNotification(reason: string, cwd: string): void {
     }
   } else if (reason === "done") {
     const level = getEventLevel("taskCompleted");
+    const threshold = getMinTaskDurationThreshold();
+    if (shouldSuppressForThreshold(lastSignalSessionId, threshold)) return;
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.SOUND) {
       if (isRemote) {
         playRemoteSound();
