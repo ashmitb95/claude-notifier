@@ -1,4 +1,5 @@
 import { log } from "../log";
+import { deleteMarker } from "./task-timer";
 
 /**
  * Per-session stage state machine.
@@ -68,6 +69,7 @@ function armIdleTimer(sid: string, s: SessionStage): void {
     );
     s.stageId += 1;
     s.fired.clear();
+    deleteMarker(sid);
     s.idleTimer = null;
   }, IDLE_RESET_MS);
 }
