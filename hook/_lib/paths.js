@@ -6,5 +6,6 @@ const SIGNAL_FILE = path.join(HOOKS_DIR, "claude-signal");
 const FOCUS_SIGNAL_FILE = path.join(HOOKS_DIR, "claude-notifier-focus");
 const CONFIG_FILE = path.join(HOOKS_DIR, "claude-notifier-config.json");
 const ACTIVE_DIR = path.join(HOOKS_DIR, "claude-notifier-active.d");
+const TASK_START_DIR = path.join(HOOKS_DIR, "claude-notifier-task-start");
 
-module.exports = { HOOKS_DIR, MUTE_FLAG, SIGNAL_FILE, FOCUS_SIGNAL_FILE, CONFIG_FILE, ACTIVE_DIR };
+module.exports = { HOOKS_DIR, MUTE_FLAG, SIGNAL_FILE, FOCUS_SIGNAL_FILE, CONFIG_FILE, ACTIVE_DIR, TASK_START_DIR };
