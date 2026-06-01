@@ -8,6 +8,15 @@ Stop watching the screen — go grab a coffee and let Claude ping you when it ne
 
 Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code — on **macOS**, **Windows**, **WSL**, and **Linux**.
 
+## Highlights
+
+![Hover the Claude entry in the status bar to open the control panel](media/popup-screen.png)
+
+- **Status-bar control panel.** Hover the **Claude** entry in the status bar to open a panel with volume buttons, per-event sound preview and preset swap, and minimum-task-duration threshold control.
+- **Minimum task duration threshold.** Set `claudeNotifier.minTaskDurationThreshold` (seconds) to suppress notifications for tasks shorter than the threshold — counted from the moment you submit the prompt. Quiet for the quick stuff, alert for the long stuff.
+- **Sound preview on highlight.** Arrow through sound presets in the picker and audition each one at your configured volume before committing.
+- **Parallel-session safe.** Multiple Claude sessions across terminals or VSCode windows each time their own threshold independently.
+
 ## Install
 
 ### Option 1: VSCode Extension
@@ -90,16 +99,15 @@ The global **mute toggle** lives inside the status-bar control panel (see below)
 
 ### Status-bar control panel
 
-Hover the **Claude** entry in the status bar to open the control panel. It's anchored above the icon and sticky — move into it to click. Available actions:
+Hover the **Claude** entry in the status bar to open the control panel (see screenshot at the top). It's anchored above the icon and sticky — move into it to click. Available actions:
 
 - Set volume to 0 / 25 / 50 / 75 / 100 / 150 / 200%.
-- Mute / unmute.
 - Set the minimum task duration threshold (see below).
 - Preview each event's current sound at the configured volume.
 - Change each event's sound preset with arrow-key audition (preview-on-highlight).
 - Open the full settings page.
 
-Clicking the status-bar item toggles mute. Hover over it opens the panel for every other action — the same mute toggle is also a link inside the panel.
+**Click** the status-bar item to toggle mute (hover opens the panel for every other action).
 
 The picker and preview are also exposed as command-palette entries:
 
