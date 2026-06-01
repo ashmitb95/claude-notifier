@@ -8,6 +8,7 @@ import { writeOwnPidFile, cleanStalePidFiles } from "./routing/cwd";
 import { startFocusSignalWatcher } from "./routing/focus";
 import { startSignalWatcher } from "./signals/dispatch";
 import { createStatusBar, toggleSound } from "./ui/status-bar";
+import { previewEventSoundCommand, pickEventSoundCommand } from "./ui/sound-picker";
 import { cleanupStaleMarkers } from "./signals/task-timer";
 import { initLogger, log } from "./log";
 
@@ -41,6 +42,8 @@ export function activate(context: vscode.ExtensionContext) {
       "claudeNotifier.installTerminalNotifier",
       installTerminalNotifierFlow
     ),
+    vscode.commands.registerCommand("claudeNotifier.previewEventSound", previewEventSoundCommand),
+    vscode.commands.registerCommand("claudeNotifier.pickEventSound", pickEventSoundCommand),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("claudeNotifier")) {
         syncConfig();

@@ -28,6 +28,14 @@
       {
         "command": "claudeNotifier.installTerminalNotifier",
         "title": "Claude Notifier: Install terminal-notifier (clickable macOS notifications)"
+      },
+      {
+        "command": "claudeNotifier.previewEventSound",
+        "title": "Claude Notifier: Preview Sound…"
+      },
+      {
+        "command": "claudeNotifier.pickEventSound",
+        "title": "Claude Notifier: Choose Sound…"
       }
     ],
     "configuration": {
