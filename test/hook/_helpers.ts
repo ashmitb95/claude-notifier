@@ -61,6 +61,12 @@ export function runHook(
       ...process.env,
       HOME: home,
       PATH: opts.keepPath ? (process.env.PATH ?? "") : "/",
+      // notify.js resolves terminal-notifier via absolute path
+      // (/opt/homebrew/bin/terminal-notifier), bypassing PATH=/. This env
+      // var short-circuits the notification call so tests don't fire real
+      // macOS banners. Tests that explicitly want to verify the OS spawn
+      // can clear it via extraEnv.
+      CLAUDE_NOTIFIER_TEST_SUPPRESS_NOTIFY: "1",
       ...opts.extraEnv,
     },
     encoding: "utf-8",
