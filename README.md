@@ -15,7 +15,7 @@ Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Cl
 - **Status-bar control panel.** Hover the **Claude** entry in the status bar to open a panel with volume buttons, per-event sound preview and preset swap, and minimum-task-duration threshold control.
 - **Minimum task duration threshold.** Set `claudeNotifier.minTaskDurationThreshold` (seconds) to suppress notifications for tasks shorter than the threshold — counted from the moment you submit the prompt. Quiet for the quick stuff, alert for the long stuff.
 - **Sound preview on highlight.** Arrow through sound presets in the picker and audition each one at your configured volume before committing.
-- **Parallel-session safe.** Multiple Claude sessions across terminals or VSCode windows each time their own threshold independently.
+- **Parallel-session safe.** Multiple Claude sessions across terminals or VSCode windows each track their own threshold independently.
 - **Subagent silence by default.** Permission and question prompts that originate from a `Task` subagent are suppressed (no sound, no popup) — toggle with `claudeNotifier.suppressSubagentInteractions`. Subagent completions get their own `SubagentStop` hook (`claudeNotifier.subagentCompleted.level`, default off).
 
 ## Install
@@ -158,6 +158,7 @@ On **macOS**, hooks use `afplay` and `osascript`. On **Windows** and **WSL**, ho
 
 - **Per-session dedup.** Rapid back-to-back events within a single Claude session coalesce automatically — one notification per stage, not a flood. A stage advances when you send your next prompt or after ~30 minutes of idle time.
 - **Bundled fallback sounds.** If the configured system sound file is missing on disk, a bundled WAV plays so you still hear something.
+- **Defers to other notification hosts.** Inside VS Code, the extension takes over from the hook fallback for the owning window. Inside [cmux](https://github.com/manaflow-ai/cmux), the hook detects cmux's `CMUX_CLAUDE_HOOK_CMUX_BIN` env var and skips its own sound + popup so cmux's native banner doesn't get double-stacked.
 - **Diagnostic log.** `View → Output → Claude Notifier` shows activation, signal receipts, dedup decisions, and configuration warnings — useful when debugging "I didn't get a notification."
 
 ### Clickable macOS notifications (optional)
