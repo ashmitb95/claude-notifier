@@ -1,6 +1,7 @@
 const fs = require("fs");
 const { execSync, execFileSync } = require("child_process");
 const { USE_WIN, IS_LINUX, IS_MAC, PS_BIN } = require("./platform");
+const { isInsideCmux } = require("./cmux");
 
 const TITLE = "Claude Notifier";
 
@@ -47,6 +48,9 @@ function showNotification(message, opts = {}) {
   // (see findTerminalNotifier), which bypasses the test harness's PATH=/
   // stripping. Setting this env var short-circuits before any OS spawn.
   if (process.env.CLAUDE_NOTIFIER_TEST_SUPPRESS_NOTIFY) return;
+  // cmux posts its own banner for the same event; skip the popup to avoid
+  // double-notifying. See _lib/cmux.js.
+  if (isInsideCmux()) return;
   const preferTn = !!opts.preferTerminalNotifier;
   const executeCmd = opts.executeCmd;
   try {

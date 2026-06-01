@@ -19,13 +19,17 @@
 - Stage idle-reset (30 min) now also deletes the session's task-start marker file.
 - Extension activation sweeps task-start markers older than 24 h; uninstall removes the whole marker directory.
 
+### Fixed
+
+- Suppress duplicate sound/popup when running inside [cmux](https://github.com/manaflow-ai/cmux) (`com.cmuxterm.app`). cmux's wrapper injects its own `Stop` / `Notification` / `PermissionRequest` hooks; claude-notifier now detects this via the `CMUX_CLAUDE_HOOK_CMUX_BIN` env var the wrapper exports and skips its own sound + popup to avoid double-notifying. Signal coordination is unaffected. Contributed by [@takashito](https://github.com/takashito). ([#46](https://github.com/ashmitb95/claude-notifier/pull/46))
+
 ### Internal
 
 - New `src/signals/task-timer.ts` and `hook/_lib/task-timer.js` provide `recordTaskStart`, `getStartTime`, `shouldSuppressForThreshold` (+ `deleteMarker` / `cleanupStaleMarkers` on the extension side). PowerShell parity in `hook/_lib.ps1`.
 - New `src/ui/panel-markdown.ts` is a pure function that turns the panel state into a `MarkdownString` — no side effects, unit-tested.
 - New `src/ui/sound-picker.ts` houses the QuickPick logic and the `previewEventSound` helper.
 - `src/signals/dispatch.ts` now consults `getMinTaskDurationThreshold` before playing the "done" sound (local or remote) and before showing the popup.
-- 19 new tests added (covering helper semantics, threshold suppression matrix on dispatch, idle-reset marker cleanup, panel markdown rendering, sound-picker preset listing, prompt-hook marker write, and per-hook signal-write invariants under suppression). Full suite: ~191 tests.
+- 19 new tests added (covering helper semantics, threshold suppression matrix on dispatch, idle-reset marker cleanup, panel markdown rendering, sound-picker preset listing, prompt-hook marker write, and per-hook signal-write invariants under suppression). Full suite: ~205 tests.
 
 ## [3.2.0] - 2026-05-23
 
