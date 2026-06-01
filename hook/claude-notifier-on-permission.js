@@ -7,6 +7,7 @@ const { playSound } = require("./_lib/play");
 const { showNotification } = require("./_lib/notify");
 const { writeSignal } = require("./_lib/signal");
 const { buildClickAction, GENERIC_ACTIVATE } = require("./_lib/click");
+const { shouldSuppressForThreshold } = require("./_lib/task-timer");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -30,6 +31,14 @@ process.stdin.on("end", () => {
   const volume = config?.soundVolume ?? 1;
 
   if (level === "off") process.exit(0);
+
+  const threshold = config?.minTaskDurationThreshold ?? 0;
+  if (shouldSuppressForThreshold(input.session_id, threshold)) {
+    // Suppress local sound + popup. Still write the signal so the extension
+    // can react with its own (separately threshold-checked) handling.
+    writeSignal("input", input.session_id);
+    process.exit(0);
+  }
 
   if (level === "sound+popup" || level === "sound") {
     const sound = resolveSound(

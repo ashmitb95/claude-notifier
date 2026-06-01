@@ -16,6 +16,12 @@ $level = if ($cfg.level) { $cfg.level } else { 'sound+popup' }
 
 if ($level -eq 'off') { exit 0 }
 
+$threshold = if ((Read-NotifierConfig).minTaskDurationThreshold) { (Read-NotifierConfig).minTaskDurationThreshold } else { 0 }
+if (Test-NotifierThresholdSuppress -SessionId $data.session_id -ThresholdSec $threshold) {
+    Write-NotifierSignal -Reason 'input' -SessionId $data.session_id
+    exit 0
+}
+
 if ($level -eq 'sound+popup' -or $level -eq 'sound') {
     $sound = Resolve-NotifierSound -Name $cfg.sound -Default 'C:\Windows\Media\Windows Notify.wav'
     Invoke-NotifierSound -Path $sound -Fallback $LibBundledFallback.needsPermission
