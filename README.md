@@ -16,6 +16,7 @@ Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Cl
 - **Minimum task duration threshold.** Set `claudeNotifier.minTaskDurationThreshold` (seconds) to suppress notifications for tasks shorter than the threshold — counted from the moment you submit the prompt. Quiet for the quick stuff, alert for the long stuff.
 - **Sound preview on highlight.** Arrow through sound presets in the picker and audition each one at your configured volume before committing.
 - **Parallel-session safe.** Multiple Claude sessions across terminals or VSCode windows each time their own threshold independently.
+- **Subagent silence by default.** Permission and question prompts that originate from a `Task` subagent are suppressed (no sound, no popup) — toggle with `claudeNotifier.suppressSubagentInteractions`. Subagent completions get their own `SubagentStop` hook (`claudeNotifier.subagentCompleted.level`, default off).
 
 ## Install
 
