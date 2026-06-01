@@ -7,6 +7,7 @@ $LibMuteFlag   = Join-Path $LibHooksDir 'claude-notifier-muted'
 $LibSignalFile = Join-Path $LibHooksDir 'claude-signal'
 $LibConfigFile = Join-Path $LibHooksDir 'claude-notifier-config.json'
 $LibActiveDir  = Join-Path $LibHooksDir 'claude-notifier-active.d'
+$LibTaskStartDir = Join-Path $LibHooksDir 'claude-notifier-task-start'
 
 # Bundled fallback sounds ship inside the .vsix at <ext>/media/sounds/ and
 # setupHooks copies them to ~/.claude/hooks/_lib/sounds/. Invoke-NotifierSound
@@ -118,4 +119,58 @@ function Test-ExtensionOwnsCwd([string]$Cwd) {
         }
     }
     return $false
+}
+
+# Sanitize a session id into a filename-safe slug. Mirrors safeSessionId() in
+# src/signals/task-timer.ts and hook/_lib/task-timer.js: strips non-alphanumeric
+# characters then collapses consecutive dots, falling back to __anon__.
+function Get-NotifierSafeSessionId([string]$SessionId) {
+    if (-not $SessionId) { return '__anon__' }
+    $cleaned = ($SessionId -replace '[^A-Za-z0-9._-]', '')
+    $cleaned = ($cleaned -replace '\.{2,}', '')
+    if (-not $cleaned) { return '__anon__' }
+    return $cleaned
+}
+
+function Get-NotifierMarkerPath([string]$SessionId) {
+    $sid = Get-NotifierSafeSessionId $SessionId
+    return Join-Path $LibTaskStartDir ($sid + '.json')
+}
+
+# Write the per-session task-start marker. Called from the UserPromptSubmit
+# hook. Best-effort — failure must never break the hook.
+function Save-NotifierTaskStart([string]$SessionId) {
+    try {
+        if (-not (Test-Path $LibTaskStartDir)) {
+            New-Item -ItemType Directory -Path $LibTaskStartDir -Force | Out-Null
+        }
+        $sid = Get-NotifierSafeSessionId $SessionId
+        $now = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
+        $payload = @{ startedAt = $now; sessionId = $sid } | ConvertTo-Json -Compress
+        Set-Content -Path (Get-NotifierMarkerPath $SessionId) -Value $payload -NoNewline
+    } catch {}
+}
+
+function Get-NotifierTaskStartedAt([string]$SessionId) {
+    try {
+        $raw = Get-Content (Get-NotifierMarkerPath $SessionId) -Raw -ErrorAction Stop
+        $obj = $raw | ConvertFrom-Json
+        if ($null -ne $obj -and $null -ne $obj.startedAt) {
+            return [int64]$obj.startedAt
+        }
+        return $null
+    } catch { return $null }
+}
+
+# Returns $true when the session's task started less than $ThresholdSec ago.
+# Mirrors shouldSuppressForThreshold() on the JS side. Fails open when the
+# marker is missing or unreadable.
+function Test-NotifierThresholdSuppress([string]$SessionId, $ThresholdSec) {
+    $t = 0.0
+    try { $t = [double]$ThresholdSec } catch { return $false }
+    if ($t -le 0) { return $false }
+    $started = Get-NotifierTaskStartedAt $SessionId
+    if ($null -eq $started) { return $false }
+    $now = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
+    return (($now - $started) -lt ($t * 1000))
 }
