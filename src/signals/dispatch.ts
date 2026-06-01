@@ -83,6 +83,14 @@ function handleSignal(): void {
     showNotification(reason, cwd);
   }
 
+  if (reason === "subagent_done") {
+    // No stage dedup — a single stage can include multiple Task subagents
+    // and each finish is its own event. Level defaults to "off" so the
+    // notification path stays silent unless the user opts in.
+    lastSignalSessionId = sessionId;
+    showNotification(reason, cwd);
+  }
+
   // doneDebounceMs is deprecated — stage dedup replaces it. Log once so
   // anyone who set the value sees what's going on.
   warnDeprecatedSettingOnce();
@@ -159,6 +167,26 @@ function showNotification(reason: string, cwd: string): void {
       if (!isRemote) {
         showLocalNotification("Claude has finished the task.", cwd);
       }
+    }
+  } else if (reason === "subagent_done") {
+    const level = getEventLevel("subagentCompleted");
+    const threshold = getMinTaskDurationThreshold();
+    if (shouldSuppressForThreshold(lastSignalSessionId, threshold)) return;
+    if (level === LEVELS.SOUND_POPUP || level === LEVELS.SOUND) {
+      if (isRemote) {
+        playRemoteSound();
+      } else {
+        const cfg = getEventConfig("subagentCompleted");
+        playLocalSound(
+          cfg.sound,
+          "/System/Library/Sounds/Pop.aiff",
+          "C:\\Windows\\Media\\notify.wav",
+          getSoundVolume()
+        );
+      }
+    }
+    if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
+      vscode.window.showInformationMessage("Claude subagent finished.");
     }
   }
 }

@@ -4,13 +4,14 @@ import { HOOKS, hookFileName, hookDestPath, ALL_HOOK_TYPES } from "../../src/hoo
 import { HOOK_EXT, HOOKS_DIR } from "../../src/paths";
 
 describe("HOOKS registry", () => {
-  it("declares exactly the four hook scripts the extension ships", () => {
-    expect(HOOKS).toHaveLength(4);
+  it("declares exactly the five hook scripts the extension ships", () => {
+    expect(HOOKS).toHaveLength(5);
     expect(HOOKS.map((h) => h.baseName)).toEqual([
       "claude-notifier-on-stop",
       "claude-notifier-on-permission",
       "claude-notifier-on-question",
       "claude-notifier-on-prompt",
+      "claude-notifier-on-subagent-stop",
     ]);
   });
 
@@ -20,6 +21,7 @@ describe("HOOKS registry", () => {
     expect(byBase["claude-notifier-on-permission"].type).toBe("PermissionRequest");
     expect(byBase["claude-notifier-on-question"].type).toBe("PreToolUse");
     expect(byBase["claude-notifier-on-prompt"].type).toBe("UserPromptSubmit");
+    expect(byBase["claude-notifier-on-subagent-stop"].type).toBe("SubagentStop");
   });
 
   it("the question hook carries the AskUserQuestion matcher", () => {
@@ -38,6 +40,7 @@ describe("HOOKS registry", () => {
     expect(eventKeys).toEqual([
       "asksQuestion",
       "needsPermission",
+      "subagentCompleted",
       "taskCompleted",
       "userPromptSubmit",
     ]);
@@ -63,6 +66,7 @@ describe("ALL_HOOK_TYPES", () => {
       "PermissionRequest",
       "PreToolUse",
       "Stop",
+      "SubagentStop",
       "UserPromptSubmit",
     ]);
   });

@@ -45,6 +45,15 @@ export const HOOKS: HookDef[] = [
     eventKey: "userPromptSubmit",
     defaultSound: "",
   },
+  {
+    // Fires when a Task subagent finishes. Default level is "off" so it
+    // stays silent until the user opts in — subagents are typically internal
+    // detail rather than something the user is waiting on.
+    baseName: "claude-notifier-on-subagent-stop",
+    type: "SubagentStop",
+    eventKey: "subagentCompleted",
+    defaultSound: "Pop",
+  },
 ];
 
 export function hookFileName(hook: HookDef): string {
@@ -62,4 +71,5 @@ export const ALL_HOOK_TYPES = [
   "PreToolUse",
   "Notification",
   "UserPromptSubmit",
+  "SubagentStop",
 ] as const;

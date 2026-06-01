@@ -191,6 +191,52 @@
           "default": "Funk",
           "description": "Sound preset when Claude asks a question. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
+        "claudeNotifier.subagentCompleted.level": {
+          "type": "string",
+          "enum": [
+            "sound+popup",
+            "sound",
+            "popup",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Play sound and show notification",
+            "Play sound only",
+            "Show notification only",
+            "Disabled"
+          ],
+          "default": "off",
+          "description": "Notification level when a Task subagent finishes. Off by default — subagents are typically internal detail."
+        },
+        "claudeNotifier.subagentCompleted.sound": {
+          "type": "string",
+          "enum": [
+            "Basso",
+            "Blow",
+            "Bottle",
+            "Frog",
+            "Funk",
+            "Glass",
+            "Hero",
+            "Morse",
+            "Ping",
+            "Pop",
+            "Purr",
+            "Sosumi",
+            "Submarine",
+            "Tink",
+            "Windows Notify",
+            "tada",
+            "chimes",
+            "chord",
+            "ding",
+            "notify",
+            "ringin",
+            "Windows Background"
+          ],
+          "default": "Pop",
+          "description": "Sound preset when a Task subagent finishes. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
+        },
         "claudeNotifier.soundVolume": {
           "type": "number",
           "default": 1,
