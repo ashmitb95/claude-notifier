@@ -12,7 +12,6 @@ import {
   toggleSound,
   setVolume,
   setThreshold,
-  adjustThreshold,
   openSettings,
 } from "./ui/status-bar";
 import { previewEventSoundCommand, pickEventSoundCommand } from "./ui/sound-picker";
@@ -53,9 +52,6 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("claudeNotifier.pickEventSound", pickEventSoundCommand),
     vscode.commands.registerCommand("claudeNotifier.setVolume", (v: number) => setVolume(v)),
     vscode.commands.registerCommand("claudeNotifier.setThreshold", () => setThreshold()),
-    vscode.commands.registerCommand("claudeNotifier.adjustThreshold", (d: number) =>
-      adjustThreshold(d)
-    ),
     vscode.commands.registerCommand("claudeNotifier.openSettings", () => openSettings()),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("claudeNotifier")) {

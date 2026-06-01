@@ -76,9 +76,8 @@ describe("buildPanelMarkdown", () => {
     }
   });
 
-  it("includes the toggleSound and openSettings commands", () => {
+  it("includes the openSettings command", () => {
     const md = buildPanelMarkdown(baseState).value;
-    expect(md).toContain("command:claudeNotifier.toggleSound");
     expect(md).toContain("command:claudeNotifier.openSettings");
   });
 
@@ -87,34 +86,10 @@ describe("buildPanelMarkdown", () => {
     expect(md).toContain("command:claudeNotifier.setThreshold");
   });
 
-  it("renders inline +/- steppers for threshold", () => {
-    const md = buildPanelMarkdown({ ...baseState, threshold: 10 }).value;
-    expect(md).toContain(
-      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([-5]))}`
-    );
-    expect(md).toContain(
-      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([5]))}`
-    );
-  });
-
-  it("disables the decrement stepper when threshold is already 0", () => {
-    const md = buildPanelMarkdown({ ...baseState, threshold: 0 }).value;
-    // No clickable link for decrement (would yield an invalid negative value).
-    expect(md).not.toContain(
-      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([-5]))}`
-    );
-    expect(md).toContain(
-      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([5]))}`
-    );
-  });
-
-  it("disables the increment stepper when threshold is at max (3600)", () => {
-    const md = buildPanelMarkdown({ ...baseState, threshold: 3600 }).value;
-    expect(md).not.toContain(
-      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([5]))}`
-    );
-    expect(md).toContain(
-      `command:claudeNotifier.adjustThreshold?${encodeURIComponent(JSON.stringify([-5]))}`
-    );
+  it("does not duplicate the mute toggle in the panel body", () => {
+    // Mute is handled by clicking the status bar item itself; the panel body
+    // doesn't surface a separate toggle. The header still reflects the state.
+    const md = buildPanelMarkdown(baseState).value;
+    expect(md).not.toContain("command:claudeNotifier.toggleSound");
   });
 });
