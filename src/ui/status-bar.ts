@@ -17,11 +17,9 @@ export function createStatusBar(context: vscode.ExtensionContext): void {
   soundEnabled = !fs.existsSync(MUTE_FLAG);
 
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  // A command must be assigned for the hover tooltip to fire — VS Code disables
-  // pointer-events on the label of a command-less status bar item (#75909).
-  // We assign a private no-op so click does nothing visible; the hover panel
-  // is the canonical action surface.
-  statusBarItem.command = "claudeNotifier.statusBarNoop";
+  // Click toggles mute; hover opens the rich panel for every other action.
+  // (A command must be assigned for the hover tooltip to fire — see #75909.)
+  statusBarItem.command = "claudeNotifier.toggleSound";
   refresh();
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);

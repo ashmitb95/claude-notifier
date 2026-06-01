@@ -12,7 +12,7 @@
 
 ### Changed
 
-- Clicking the status-bar item is now a no-op — the hover panel hosts every action including mute. The previous "Claude Notifier sound: ON/OFF" toast is removed; state is conveyed by the status-bar text and the panel header. A private no-op command is assigned to the item internally so the hover tooltip fires (workaround for [microsoft/vscode#75909](https://github.com/microsoft/vscode/issues/75909)).
+- The previous "Claude Notifier sound: ON/OFF" toast is removed; state is conveyed by the status-bar text and the panel header. Clicking the status-bar item still toggles mute (preserves v3.2.0 muscle memory and satisfies the VS Code constraint that a `command` must be assigned for the hover tooltip to fire — see [microsoft/vscode#75909](https://github.com/microsoft/vscode/issues/75909)). Hover over the item opens the rich panel for every other action.
 - Stage idle-reset (30 min) now also deletes the session's task-start marker file.
 - Extension activation sweeps task-start markers older than 24 h; uninstall removes the whole marker directory.
 
