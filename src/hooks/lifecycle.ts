@@ -1,6 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
-import { HOOKS_DIR, SIGNAL_FILE, MUTE_FLAG, CONFIG_FILE, ACTIVE_DIR, IS_WIN } from "../paths";
+import {
+  HOOKS_DIR,
+  SIGNAL_FILE,
+  MUTE_FLAG,
+  CONFIG_FILE,
+  ACTIVE_DIR,
+  TASK_START_DIR,
+  IS_WIN,
+} from "../paths";
 import { HOOKS, hookDestPath } from "./registry";
 import { hookCmd } from "./cmd";
 import { readSettings, writeSettings, stripClaudeNotifierHooks } from "../settings/claude";
@@ -183,6 +191,10 @@ export function teardownHooks(): void {
   } catch {}
   try {
     fs.rmSync(path.join(HOOKS_DIR, "_lib"), { recursive: true, force: true });
+  } catch {}
+
+  try {
+    fs.rmSync(TASK_START_DIR, { recursive: true, force: true });
   } catch {}
 
   // Older versions shipped a generated AppleScript shim — remove if present.
