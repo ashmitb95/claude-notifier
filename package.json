@@ -178,6 +178,13 @@
           "maximum": 2,
           "description": "Volume multiplier applied to all notification sounds. 1 = system default, 2 = boosted (~200%). Honored on Linux (paplay) and macOS (afplay). Windows ignores this — Media.SoundPlayer has no volume API."
         },
+        "claudeNotifier.minTaskDurationThreshold": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 3600,
+          "description": "Suppress notification sounds and popups for tasks that complete in less than this many seconds. Counted from when you submit the prompt. 0 disables the feature (all notifications fire normally)."
+        },
         "claudeNotifier.doneDebounceMs": {
           "type": "number",
           "default": 2000,
