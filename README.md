@@ -99,7 +99,7 @@ Hover the **Claude** entry in the status bar to open the control panel. It's anc
 - Change each event's sound preset with arrow-key audition (preview-on-highlight).
 - Open the full settings page.
 
-Clicking the status-bar item itself does nothing — every action lives inside the hover panel.
+Clicking the status-bar item toggles mute (the same action is also a link inside the panel).
 
 The picker and preview are also exposed as command-palette entries:
 
