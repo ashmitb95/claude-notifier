@@ -1,6 +1,7 @@
 const fs = require("fs");
 const { execSync, execFileSync } = require("child_process");
 const { USE_WIN, IS_LINUX, IS_MAC, PS_BIN } = require("./platform");
+const { isInsideCmux } = require("./cmux");
 
 const TITLE = "Claude Notifier";
 
@@ -43,6 +44,9 @@ function findTerminalNotifier() {
  * can't carry a click action; their click defaults to Script Editor).
  */
 function showNotification(message, opts = {}) {
+  // cmux posts its own banner for the same event; skip the popup to avoid
+  // double-notifying. See _lib/cmux.js.
+  if (isInsideCmux()) return;
   const preferTn = !!opts.preferTerminalNotifier;
   const executeCmd = opts.executeCmd;
   try {

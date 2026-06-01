@@ -20,6 +20,16 @@ describe("hook: claude-notifier-on-permission", () => {
     expect(readSignal(home.signalFile)).toMatch(/^input \d+ s-1$/);
   });
 
+  it("inside cmux: still writes the 'input' signal (notification suppressed by the cmux guard)", () => {
+    // cmux injects its own hooks that post a native banner, so the cmux guard
+    // skips claude-notifier's sound/popup. Signal coordination must survive.
+    const res = runHook(SCRIPT, { tool_name: "Bash", session_id: "s-1" }, home.root, {
+      extraEnv: { CMUX_CLAUDE_HOOK_CMUX_BIN: "/Applications/cmux.app/Contents/Resources/bin/cmux" },
+    });
+    expect(res.status).toBe(0);
+    expect(readSignal(home.signalFile)).toMatch(/^input \d+ s-1$/);
+  });
+
   it("AskUserQuestion is skipped (handled by the question hook)", () => {
     const res = runHook(SCRIPT, { tool_name: "AskUserQuestion", session_id: "s-1" }, home.root);
     expect(res.status).toBe(0);

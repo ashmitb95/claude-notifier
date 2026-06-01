@@ -1,6 +1,7 @@
 const fs = require("fs");
 const { execSync } = require("child_process");
 const { USE_WIN, IS_LINUX, PS_BIN } = require("./platform");
+const { isInsideCmux } = require("./cmux");
 
 function clampVolume(v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return 1;
@@ -22,6 +23,9 @@ function clampVolume(v) {
  *   Media.SoundPlayer has no volume API.
  */
 function playSound(primaryPath, fallbackPath, volume = 1) {
+  // cmux posts its own banner for the same event; skip the sound to avoid
+  // double-notifying. See _lib/cmux.js.
+  if (isInsideCmux()) return;
   const soundPath =
     primaryPath && fs.existsSync(primaryPath) ? primaryPath : fallbackPath || primaryPath;
   if (!soundPath) return;
