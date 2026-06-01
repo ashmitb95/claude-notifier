@@ -15,6 +15,16 @@ export function clampVolume(v: number | undefined): number {
   return v;
 }
 
+export const MIN_THRESHOLD = 0;
+export const MAX_THRESHOLD = 3600;
+export const DEFAULT_THRESHOLD = 0;
+
+export function clampThreshold(v: number | undefined): number {
+  if (v === undefined || !Number.isFinite(v) || v < MIN_THRESHOLD) return DEFAULT_THRESHOLD;
+  if (v > MAX_THRESHOLD) return MAX_THRESHOLD;
+  return v;
+}
+
 export function syncConfig(): void {
   const cfg = vscode.workspace.getConfiguration("claudeNotifier");
   const events = Object.fromEntries(
@@ -29,6 +39,9 @@ export function syncConfig(): void {
   const config = {
     ...events,
     soundVolume: clampVolume(cfg.get<number>("soundVolume", DEFAULT_VOLUME)),
+    minTaskDurationThreshold: clampThreshold(
+      cfg.get<number>("minTaskDurationThreshold", DEFAULT_THRESHOLD)
+    ),
   };
   try {
     fs.mkdirSync(HOOKS_DIR, { recursive: true });
@@ -58,5 +71,14 @@ export function getSoundVolume(): number {
     return clampVolume(config.soundVolume ?? DEFAULT_VOLUME);
   } catch {
     return DEFAULT_VOLUME;
+  }
+}
+
+export function getMinTaskDurationThreshold(): number {
+  try {
+    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+    return clampThreshold(config.minTaskDurationThreshold ?? DEFAULT_THRESHOLD);
+  } catch {
+    return DEFAULT_THRESHOLD;
   }
 }
