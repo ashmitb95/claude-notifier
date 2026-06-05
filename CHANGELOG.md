@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.1] - 2026-06-05
+
+### Fixed
+
+- **`install.sh` no longer ships a broken install.** The installer copied a hardcoded list of `_lib` modules that had silently rotted — `pid.js`, `click.js`, `task-timer.js`, and `cmux.js` were all required by the hooks but missing from the list, so a fresh `curl | bash` install crashed every event hook (e.g. `Cannot find module './cmux'`). The list is now derived from the repo via the GitHub contents API, so it can't drift again as new modules are added. ([#50](https://github.com/ashmitb95/claude-notifier/issues/50))
+- **`uninstall.sh` now removes the `UserPromptSubmit` hook.** `install.sh` registers a `UserPromptSubmit` hook but the uninstaller never removed it, leaving a dangling registration behind. ([#50](https://github.com/ashmitb95/claude-notifier/issues/50))
+
 ## [3.3.0] - 2026-05-24
 
 ### Added
