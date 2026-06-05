@@ -26,7 +26,7 @@ for script in claude-notifier-on-stop.js claude-notifier-on-permission.js claude
 done
 
 # Shared hook library (required by the hook scripts since v3.0)
-for lib in platform.js paths.js sounds.js config.js play.js notify.js signal.js active.js; do
+for lib in platform.js paths.js sounds.js config.js play.js notify.js signal.js active.js pid.js click.js task-timer.js cmux.js; do
   curl -fsSL "$REPO_RAW/hook/_lib/$lib" -o "$HOOKS_DIR/_lib/$lib"
 done
 
