@@ -15,6 +15,7 @@ CLAUDE_DIR="$HOME/.claude"
 HOOKS_DIR="$CLAUDE_DIR/hooks"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 REPO_RAW="https://raw.githubusercontent.com/ashmitb95/claude-notifier/main"
+REPO_API="https://api.github.com/repos/ashmitb95/claude-notifier/contents"
 
 echo "Installing Claude Notifier..."
 
@@ -25,8 +26,16 @@ for script in claude-notifier-on-stop.js claude-notifier-on-permission.js claude
   chmod +x "$HOOKS_DIR/$script"
 done
 
-# Shared hook library (required by the hook scripts since v3.0)
-for lib in platform.js paths.js sounds.js config.js play.js notify.js signal.js active.js; do
+# Shared hook library (required by the hook scripts since v3.0).
+# Derive the file list from the repo so it can't drift as new _lib modules are added.
+for lib in $(curl -fsSL "$REPO_API/hook/_lib?ref=main" | node -e "
+let s = '';
+process.stdin.on('data', d => (s += d)).on('end', () => {
+  JSON.parse(s)
+    .filter(e => e.type === 'file' && e.name.endsWith('.js'))
+    .forEach(e => console.log(e.name));
+});
+"); do
   curl -fsSL "$REPO_RAW/hook/_lib/$lib" -o "$HOOKS_DIR/_lib/$lib"
 done
 

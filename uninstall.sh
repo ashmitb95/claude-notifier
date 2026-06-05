@@ -22,7 +22,7 @@ if [ -f "$SETTINGS_FILE" ]; then
   node -e "
 const fs = require('fs');
 const settings = JSON.parse(fs.readFileSync('$SETTINGS_FILE', 'utf-8'));
-for (const t of ['Stop', 'PermissionRequest', 'PreToolUse', 'Notification']) {
+for (const t of ['Stop', 'PermissionRequest', 'PreToolUse', 'Notification', 'UserPromptSubmit']) {
   if (settings.hooks?.[t]) {
     settings.hooks[t] = settings.hooks[t].filter(
       e => !e.hooks?.some(h => h.command?.includes('claude-notifier'))
