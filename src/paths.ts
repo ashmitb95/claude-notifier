@@ -21,3 +21,11 @@ export const IS_WIN = process.platform === "win32";
 export const IS_MAC = process.platform === "darwin";
 export const IS_LINUX = process.platform === "linux";
 export const HOOK_EXT = IS_WIN ? ".ps1" : ".js";
+
+/**
+ * Get the per-reason signal file path for a given reason.
+ * Used to avoid race conditions when multiple hooks write simultaneously.
+ */
+export function signalFileFor(reason: string): string {
+  return `${SIGNAL_FILE}-${reason}`;
+}

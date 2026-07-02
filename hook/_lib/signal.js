@@ -26,6 +26,10 @@ function writeSignal(reason, sessionId, cwd, pidChain) {
     const payload = cwd
       ? `${reason} ${ts} ${safeSid}${middle} ${cwd}`
       : `${reason} ${ts} ${safeSid}${middle}`;
+    // Write to per-reason file (new) to avoid race conditions
+    const perReasonFile = `${SIGNAL_FILE}-${reason}`;
+    fs.writeFileSync(perReasonFile, payload);
+    // Also write to legacy single file for backward compatibility
     fs.writeFileSync(SIGNAL_FILE, payload);
   } catch {}
 }

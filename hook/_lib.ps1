@@ -101,6 +101,10 @@ function Write-NotifierSignal([string]$Reason, [string]$SessionId, [string]$Cwd)
         $sid = if ($SessionId) { ($SessionId -replace '\s+', '') } else { '-' }
         if (-not $sid) { $sid = '-' }
         $payload = if ($Cwd) { "$Reason $ts $sid $Cwd" } else { "$Reason $ts $sid" }
+        # Write to per-reason file (new) to avoid race conditions
+        $perReasonFile = "$LibSignalFile-$Reason"
+        Set-Content -Path $perReasonFile -Value $payload -NoNewline
+        # Also write to legacy single file for backward compatibility
         Set-Content -Path $LibSignalFile -Value $payload -NoNewline
     } catch {}
 }

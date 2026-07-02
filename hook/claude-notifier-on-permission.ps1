@@ -3,6 +3,7 @@
 $ErrorActionPreference = 'SilentlyContinue'
 . (Join-Path $PSScriptRoot '_lib.ps1')
 
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
 $raw = [Console]::In.ReadToEnd()
 try { $data = $raw | ConvertFrom-Json } catch { exit 0 }
 

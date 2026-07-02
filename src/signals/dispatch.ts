@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { SIGNAL_FILE } from "../paths";
+import { SIGNAL_FILE, signalFileFor } from "../paths";
 import { LEVELS } from "./types";
 import { parseSignal } from "./parser";
 import * as stage from "./stage";
@@ -19,44 +19,83 @@ import { showLocalNotification } from "../notifications/local";
 import { playRemoteSound, pushRemoteAudio } from "../notifications/remote";
 import { shouldSuppressForThreshold } from "./task-timer";
 
-let watcher: fs.FSWatcher | null = null;
+let watchers: fs.FSWatcher[] = [];
 let deprecationLogged = false;
 let lastSignalSessionId: string | null = null;
 
+// Per-watcher debounce timers to coalesce Windows fs.watch double-fire
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const DEBOUNCE_MS = 50;
+
 /**
- * Watch SIGNAL_FILE for changes and route to handleSignal(). Returns a
- * Disposable that closes the watcher and tears down per-session stage state.
+ * Watch SIGNAL_FILE and per-reason signal files for changes and route to
+ * handleSignalFile(). Returns a Disposable that closes all watchers and
+ * tears down per-session stage state.
  */
 export function startSignalWatcher(): vscode.Disposable {
+  // Ensure legacy signal file exists
   if (!fs.existsSync(SIGNAL_FILE)) {
     fs.writeFileSync(SIGNAL_FILE, "");
   }
-  watcher = fs.watch(SIGNAL_FILE, (eventType) => {
-    if (eventType === "change") {
-      handleSignal();
+
+  // Watch files: legacy + per-reason
+  const filesToWatch = [
+    SIGNAL_FILE,
+    signalFileFor("done"),
+    signalFileFor("prompt"),
+    signalFileFor("input"),
+    signalFileFor("question"),
+    signalFileFor("subagent_done"),
+  ];
+
+  for (const file of filesToWatch) {
+    // Ensure file exists before watching
+    if (!fs.existsSync(file)) {
+      try {
+        fs.writeFileSync(file, "");
+      } catch {}
     }
-  });
-  log("signal watcher started:", SIGNAL_FILE);
+
+    const watcher = fs.watch(file, (eventType) => {
+      if (eventType === "change") {
+        // Debounce to coalesce Windows fs.watch double-fire
+        const existing = debounceTimers.get(file);
+        if (existing) clearTimeout(existing);
+        debounceTimers.set(
+          file,
+          setTimeout(() => {
+            debounceTimers.delete(file);
+            handleSignalFile(file);
+          }, DEBOUNCE_MS)
+        );
+      }
+    });
+    watchers.push(watcher);
+  }
+
+  log("signal watcher started:", SIGNAL_FILE, "+ per-reason files");
   return {
     dispose: () => {
-      watcher?.close();
-      watcher = null;
+      for (const w of watchers) w.close();
+      watchers = [];
+      for (const t of debounceTimers.values()) clearTimeout(t);
+      debounceTimers.clear();
       stage.reset();
     },
   };
 }
 
-function handleSignal(): void {
+function handleSignalFile(filePath: string): void {
   let content = "";
   try {
-    content = fs.readFileSync(SIGNAL_FILE, "utf-8").trim();
+    content = fs.readFileSync(filePath, "utf-8").trim();
   } catch {
     return;
   }
   if (!content) return;
 
   const { reason, sessionId, cwd, pidChain } = parseSignal(content);
-  log("signal:", reason, sessionId ?? "-", cwd || "(no cwd)");
+  log("signal:", reason, sessionId ?? "-", cwd || "(no cwd)", "from", filePath);
 
   // UserPromptSubmit is coordination-only — advance the stage and exit.
   // No cwd routing for prompt; the prompt advance applies to every window
@@ -102,9 +141,9 @@ function handleSignal(): void {
   warnDeprecatedSettingOnce();
 }
 
-// Test-only: directly drive the signal handler. Production calls it via fs.watch.
+// Test-only: directly drive the signal handler for the legacy signal file.
 export function __handleSignalForTest(): void {
-  handleSignal();
+  handleSignalFile(SIGNAL_FILE);
 }
 
 function warnDeprecatedSettingOnce(): void {

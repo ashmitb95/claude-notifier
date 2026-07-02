@@ -82,3 +82,34 @@ describe("hook/_lib/signal — writeSignal", () => {
     expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(/^done \d+ abc 1001,2002 \/Users\/foo$/);
   });
 });
+
+describe("hook/_lib/signal — per-reason signal files", () => {
+  beforeEach(() => {
+    // Clean up per-reason files
+    for (const reason of ["done", "prompt", "input", "question", "subagent_done"]) {
+      try {
+        fs.unlinkSync(`${SIGNAL_FILE}-${reason}`);
+      } catch {}
+    }
+  });
+
+  it("writes to per-reason file in addition to legacy file", () => {
+    signal.writeSignal("done", "abc-123", "/Users/foo/proj");
+    // Legacy file still written
+    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(/^done \d+ abc-123 \/Users\/foo\/proj$/);
+    // Per-reason file also written
+    expect(fs.readFileSync(`${SIGNAL_FILE}-done`, "utf-8")).toMatch(
+      /^done \d+ abc-123 \/Users\/foo\/proj$/
+    );
+  });
+
+  it("per-reason file matches reason argument", () => {
+    signal.writeSignal("prompt", "sess-1");
+    signal.writeSignal("input", "sess-2");
+    signal.writeSignal("question", "sess-3");
+
+    expect(fs.readFileSync(`${SIGNAL_FILE}-prompt`, "utf-8")).toMatch(/^prompt \d+ sess-1$/);
+    expect(fs.readFileSync(`${SIGNAL_FILE}-input`, "utf-8")).toMatch(/^input \d+ sess-2$/);
+    expect(fs.readFileSync(`${SIGNAL_FILE}-question`, "utf-8")).toMatch(/^question \d+ sess-3$/);
+  });
+});
