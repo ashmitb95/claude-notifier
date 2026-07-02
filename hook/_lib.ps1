@@ -106,8 +106,12 @@ function Write-NotifierSignal([string]$Reason, [string]$SessionId, [string]$Cwd)
 }
 
 # True when $Cwd is inside $Folder (handles trailing separator equivalence).
+# On Windows, paths are case-insensitive — normalize to lowercase for parity
+# with cwdMatchesFolder() in src/routing/cwd.ts.
 function Test-CwdInsideFolder([string]$Cwd, [string]$Folder) {
     if (-not $Cwd -or -not $Folder) { return $false }
+    $isWindows = [IO.Path]::DirectorySeparatorChar -eq '\'
+    if ($isWindows) { $Cwd = $Cwd.ToLower(); $Folder = $Folder.ToLower() }
     if ($Cwd -eq $Folder) { return $true }
     $sep = [IO.Path]::DirectorySeparatorChar
     if (-not $Folder.EndsWith($sep)) { $Folder = $Folder + $sep }

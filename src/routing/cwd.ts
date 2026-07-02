@@ -25,8 +25,15 @@ export function writeOwnPidFile(): void {
 
 export function cwdMatchesFolder(cwd: string, folder: string): boolean {
   if (!cwd || !folder) return false;
-  if (cwd === folder) return true;
-  return cwd.startsWith(folder.endsWith(path.sep) ? folder : folder + path.sep);
+  // On Windows, paths are case-insensitive — normalize to lowercase for
+  // parity with Test-CwdInsideFolder in hook/_lib.ps1 and cwdInsideFolder
+  // in hook/_lib/active.js.
+  const isWindows = process.platform === "win32";
+  const normalize = (p: string) => (isWindows ? p.toLowerCase() : p);
+  const normCwd = normalize(cwd);
+  const normFolder = normalize(folder);
+  if (normCwd === normFolder) return true;
+  return normCwd.startsWith(normFolder.endsWith(path.sep) ? normFolder : normFolder + path.sep);
 }
 
 export function cleanStalePidFiles(): void {

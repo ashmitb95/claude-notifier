@@ -4,9 +4,15 @@ const { ACTIVE_DIR } = require("./paths");
 
 function cwdInsideFolder(cwd, folder) {
   if (!cwd || !folder) return false;
-  if (cwd === folder) return true;
+  // On Windows, paths are case-insensitive — normalize for parity with
+  // cwdMatchesFolder() in src/routing/cwd.ts.
+  const isWindows = process.platform === "win32";
+  const normalize = (p) => (isWindows ? p.toLowerCase() : p);
+  const normCwd = normalize(cwd);
+  const normFolder = normalize(folder);
+  if (normCwd === normFolder) return true;
   const sep = path.sep;
-  return cwd.startsWith(folder.endsWith(sep) ? folder : folder + sep);
+  return normCwd.startsWith(normFolder.endsWith(sep) ? normFolder : normFolder + sep);
 }
 
 /**
