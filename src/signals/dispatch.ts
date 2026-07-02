@@ -118,12 +118,19 @@ function handleSignalFile(filePath: string): void {
     rememberDone({ sessionId, pidChain: pidChain ?? [], cwd });
   }
 
-  if (reason === "done" || reason === "input" || reason === "question") {
-    // Stage dedup: at most one notification per (session, reason) per stage.
+  if (reason === "done") {
+    // Stage dedup: at most one "done" notification per stage.
     // Stage advances on UserPromptSubmit (prompt signal) or idle (30 min).
     if (!stage.shouldFire(sessionId, reason)) {
       return;
     }
+    lastSignalSessionId = sessionId;
+    showNotification(reason, cwd);
+  }
+
+  if (reason === "input" || reason === "question") {
+    // No stage dedup — permission requests and questions can occur multiple
+    // times within a single stage. Debounce (50ms) handles fs.watch double-fire.
     lastSignalSessionId = sessionId;
     showNotification(reason, cwd);
   }
