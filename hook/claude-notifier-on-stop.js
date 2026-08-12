@@ -7,6 +7,7 @@ const { isMuted, isDisabled, readConfig } = require("./_lib/config");
 const { BUNDLED_FALLBACK } = require("./_lib/sounds");
 const { emitSound } = require("./_lib/emit");
 const { showNotification } = require("./_lib/notify");
+const { titleForCwd } = require("./_lib/title");
 const { extensionOwnsCwd } = require("./_lib/active");
 const { writeSignal } = require("./_lib/signal");
 const { getAncestorPids } = require("./_lib/pid");
@@ -66,6 +67,7 @@ process.stdin.on("end", () => {
     // Stop notifications fire when the user is likely away — prefer
     // terminal-notifier so the click can focus VS Code.
     showNotification("Claude has finished the task.", {
+      title: titleForCwd(cwd),
       preferTerminalNotifier: true,
       executeCmd: buildClickAction(cwd) || GENERIC_ACTIVATE,
     });

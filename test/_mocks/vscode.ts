@@ -23,6 +23,7 @@ export const window = {
 
 export const workspace = {
   workspaceFolders: undefined as unknown,
+  workspaceFile: undefined as unknown,
   getConfiguration: (_section?: string) => ({
     get: <T>(_key: string, defaultValue?: T) => defaultValue,
     update: (_key: string, _value: unknown) => Promise.resolve(),

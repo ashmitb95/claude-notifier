@@ -7,6 +7,7 @@ const { isMuted, isDisabled, readConfig } = require("./_lib/config");
 const { BUNDLED_FALLBACK } = require("./_lib/sounds");
 const { emitSound } = require("./_lib/emit");
 const { showNotification } = require("./_lib/notify");
+const { titleForCwd } = require("./_lib/title");
 const { writeSignal } = require("./_lib/signal");
 
 let raw = "";
@@ -42,7 +43,8 @@ process.stdin.on("end", () => {
   );
 
   const message = input.message || "Claude needs your permission.";
-  showNotification(message);
+  const cwd = (input && input.cwd) || process.cwd() || "";
+  showNotification(message, { title: titleForCwd(cwd) });
 
   writeSignal("input", input.session_id);
 

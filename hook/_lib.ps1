@@ -79,14 +79,27 @@ function Invoke-NotifierSound([string]$Path, [string]$Fallback) {
     } catch {}
 }
 
-# Show a Windows balloon notification (title is always "Claude Notifier").
-function Show-NotifierNotification([string]$Message) {
+# Notification title for a hook firing in $Cwd — the project directory's leaf
+# name, so parallel Claude sessions are distinguishable at a glance in the
+# tray. Mirrors titleForCwd in hook/_lib/title.js. Falls back to
+# "Claude Notifier" when there's no usable leaf.
+function Get-NotifierTitle([string]$Cwd) {
+    if (-not $Cwd) { return 'Claude Notifier' }
+    $leaf = @($Cwd -split '[\\/]+' | Where-Object { $_ }) | Select-Object -Last 1
+    if ($leaf) { return $leaf }
+    return 'Claude Notifier'
+}
+
+# Show a Windows balloon notification. Pass -Title (see Get-NotifierTitle) to
+# label it with the project; defaults to "Claude Notifier".
+function Show-NotifierNotification([string]$Message, [string]$Title = 'Claude Notifier') {
     try {
+        if (-not $Title) { $Title = 'Claude Notifier' }
         Add-Type -AssemblyName System.Windows.Forms
         $n = New-Object System.Windows.Forms.NotifyIcon
         $n.Icon = [System.Drawing.SystemIcons]::Information
         $n.Visible = $true
-        $n.ShowBalloonTip(3000, 'Claude Notifier', $Message, [System.Windows.Forms.ToolTipIcon]::None)
+        $n.ShowBalloonTip(3000, $Title, $Message, [System.Windows.Forms.ToolTipIcon]::None)
         Start-Sleep -Milliseconds 500
         $n.Dispose()
     } catch {}
