@@ -40,9 +40,9 @@ process.stdin.on("end", () => {
     volume,
     config
   );
-
   const message = input.message || "Claude needs your permission.";
-  showNotification(message);
+  const cwd = input.cwd;
+  showNotification(message, cwd);
 
   writeSignal("input", input.session_id);
 
