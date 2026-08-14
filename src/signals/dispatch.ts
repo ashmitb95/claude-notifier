@@ -6,7 +6,12 @@ import { parseSignal } from "./parser";
 import * as stage from "./stage";
 import { log } from "../log";
 import { getOwnWorkspaceFolders, cwdMatchesFolder, anotherWindowOwnsCwd } from "../routing/cwd";
-import { rememberDone, getRememberedDone, revealClaudeTab } from "../routing/focus";
+import {
+  rememberDone,
+  getRememberedDone,
+  getRememberedDoneForSession,
+  revealClaudeTab,
+} from "../routing/focus";
 import {
   getEventLevel,
   getEventConfig,
@@ -179,6 +184,9 @@ function showNotification(reason: string, cwd: string): void {
     }
   } else if (reason === "done") {
     const level = getEventLevel("taskCompleted");
+    // Captured now: the Reveal click below resolves long after this runs, by
+    // which point lastSignalSessionId may point at a different session.
+    const sid = lastSignalSessionId;
     const threshold = getMinTaskDurationThreshold();
     if (shouldSuppressForThreshold(lastSignalSessionId, threshold)) return;
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.SOUND) {
@@ -200,7 +208,7 @@ function showNotification(reason: string, cwd: string): void {
         .showInformationMessage("Claude has finished the task.", "Reveal")
         .then((pick) => {
           if (pick === "Reveal") {
-            void revealClaudeTab(getRememberedDone(cwd));
+            void revealClaudeTab(getRememberedDoneForSession(sid) ?? getRememberedDone(cwd));
           }
         });
       if (!isRemote) {

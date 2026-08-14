@@ -11,8 +11,15 @@ export interface DoneContext {
 }
 
 const lastDoneByCwd = new Map<string, DoneContext>();
+// Also indexed by session, because several sessions can share one cwd. Keyed by
+// cwd alone, a Reveal click resolves whichever session in that directory
+// finished most recently, which is not necessarily the one that was clicked.
+const lastDoneBySession = new Map<string, DoneContext>();
 
 export function rememberDone(ctx: DoneContext): void {
+  if (ctx.sessionId && ctx.sessionId !== "-") {
+    lastDoneBySession.set(ctx.sessionId, ctx);
+  }
   if (!ctx.cwd) return;
   lastDoneByCwd.set(ctx.cwd, ctx);
 }
@@ -21,8 +28,14 @@ export function getRememberedDone(cwd: string): DoneContext | null {
   return lastDoneByCwd.get(cwd) ?? null;
 }
 
+export function getRememberedDoneForSession(sessionId: string | null): DoneContext | null {
+  if (!sessionId) return null;
+  return lastDoneBySession.get(sessionId) ?? null;
+}
+
 export function resetDoneMemory(): void {
   lastDoneByCwd.clear();
+  lastDoneBySession.clear();
 }
 
 /**

@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import {
   rememberDone,
   getRememberedDone,
+  getRememberedDoneForSession,
   resetDoneMemory,
   revealClaudeTab,
 } from "../../src/routing/focus";
@@ -47,6 +48,38 @@ describe("routing/focus — done memory", () => {
     rememberDone({ sessionId: "a", pidChain: [1], cwd: "/x" });
     resetDoneMemory();
     expect(getRememberedDone("/x")).toBeNull();
+    expect(getRememberedDoneForSession("a")).toBeNull();
+  });
+
+  it("looks a session up by id as well as by cwd", () => {
+    rememberDone({ sessionId: "abc", pidChain: [1, 2], cwd: "/Users/foo" });
+    expect(getRememberedDoneForSession("abc")?.cwd).toBe("/Users/foo");
+  });
+
+  it("resolves the session that fired, not just the last one in its cwd", () => {
+    // Several sessions in one workspace share a cwd, so a cwd-keyed lookup hands
+    // back whichever finished most recently rather than the one clicked.
+    rememberDone({ sessionId: "first", pidChain: [1], cwd: "/x" });
+    rememberDone({ sessionId: "second", pidChain: [2], cwd: "/x" });
+
+    expect(getRememberedDone("/x")?.sessionId).toBe("second");
+    expect(getRememberedDoneForSession("first")?.pidChain).toEqual([1]);
+    expect(getRememberedDoneForSession("second")?.pidChain).toEqual([2]);
+  });
+
+  it("indexes by session even when the cwd is empty", () => {
+    rememberDone({ sessionId: "nocwd", pidChain: [3], cwd: "" });
+    expect(getRememberedDoneForSession("nocwd")?.pidChain).toEqual([3]);
+  });
+
+  it("ignores the '-' placeholder session id", () => {
+    rememberDone({ sessionId: "-", pidChain: [1], cwd: "/x" });
+    expect(getRememberedDoneForSession("-")).toBeNull();
+  });
+
+  it("returns null for an unknown or absent session id", () => {
+    expect(getRememberedDoneForSession("never-set")).toBeNull();
+    expect(getRememberedDoneForSession(null)).toBeNull();
   });
 });
 
