@@ -4,6 +4,9 @@ export const HOME = process.env.HOME || process.env.USERPROFILE || "~";
 export const CLAUDE_DIR = path.join(HOME, ".claude");
 export const HOOKS_DIR = path.join(CLAUDE_DIR, "hooks");
 export const SETTINGS_FILE = path.join(CLAUDE_DIR, "settings.json");
+// Claude Code's own session transcripts, one directory per slugged cwd. Read
+// (never written) to resolve a session's title. See signals/session-label.ts.
+export const PROJECTS_DIR = path.join(CLAUDE_DIR, "projects");
 export const CONFIG_FILE = path.join(HOOKS_DIR, "claude-notifier-config.json");
 export const SIGNAL_FILE = path.join(HOOKS_DIR, "claude-signal");
 export const FOCUS_SIGNAL_FILE = path.join(HOOKS_DIR, "claude-notifier-focus");

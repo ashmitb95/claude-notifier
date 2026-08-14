@@ -19,6 +19,7 @@ import { playLocalSound } from "../notifications/sound";
 import { showLocalNotification } from "../notifications/local";
 import { playRemoteSound, pushRemoteAudio } from "../notifications/remote";
 import { shouldSuppressForThreshold } from "./task-timer";
+import { buildSessionLabel } from "./session-label";
 
 let watcher: fs.FSWatcher | null = null;
 let deprecationLogged = false;
@@ -139,6 +140,19 @@ function showNotification(reason: string, cwd: string): void {
   // out of scope — the hook process can't see window focus.
   if (getAutoMuteWhenFocused() && vscode.window.state.focused) return;
 
+  // Name the session in every popup, so several concurrent sessions are
+  // tellable apart. Resolved lazily (it reads the session transcript) so the
+  // sound-only and "off" levels stay free, and memoised because a single
+  // notification can build more than one message. An empty label means nothing
+  // could be resolved, in which case each site keeps its original wording.
+  let label: string | undefined;
+  const message = (suffix: string, unlabelled: string): string => {
+    if (label === undefined) {
+      label = buildSessionLabel({ cwd, sessionId: lastSignalSessionId });
+    }
+    return label ? `${label} · ${suffix}` : unlabelled;
+  };
+
   // Architecture note: "question" and "input" local sounds are played by their
   // respective hook scripts (PreToolUse / PermissionRequest) — not the extension.
   // Only "done" local sounds are played here, because the extension is the
@@ -159,7 +173,9 @@ function showNotification(reason: string, cwd: string): void {
       playRemoteSound();
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
-      vscode.window.showInformationMessage("Claude needs your permission.");
+      vscode.window.showInformationMessage(
+        message("needs permission", "Claude needs your permission.")
+      );
     }
   } else if (reason === "question") {
     const level = getEventLevel("asksQuestion");
@@ -175,7 +191,9 @@ function showNotification(reason: string, cwd: string): void {
       playRemoteSound();
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
-      vscode.window.showInformationMessage("Claude is asking you a question.");
+      vscode.window.showInformationMessage(
+        message("asked you a question", "Claude is asking you a question.")
+      );
     }
   } else if (reason === "done") {
     const level = getEventLevel("taskCompleted");
@@ -197,14 +215,14 @@ function showNotification(reason: string, cwd: string): void {
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
       vscode.window
-        .showInformationMessage("Claude has finished the task.", "Reveal")
+        .showInformationMessage(message("finished", "Claude has finished the task."), "Reveal")
         .then((pick) => {
           if (pick === "Reveal") {
             void revealClaudeTab(getRememberedDone(cwd));
           }
         });
       if (!isRemote) {
-        showLocalNotification("Claude has finished the task.", cwd);
+        showLocalNotification(message("finished", "Claude has finished the task."), cwd);
       }
     }
   } else if (reason === "subagent_done") {
@@ -226,7 +244,9 @@ function showNotification(reason: string, cwd: string): void {
       }
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
-      vscode.window.showInformationMessage("Claude subagent finished.");
+      vscode.window.showInformationMessage(
+        message("subagent finished", "Claude subagent finished.")
+      );
     }
   }
 }

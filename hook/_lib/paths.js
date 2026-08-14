@@ -2,6 +2,13 @@ const path = require("path");
 
 const HOOKS_DIR = path.join(process.env.HOME || process.env.USERPROFILE || "~", ".claude", "hooks");
 const MUTE_FLAG = path.join(HOOKS_DIR, "claude-notifier-muted");
+// Claude Code session transcripts, read (never written) to resolve a session
+// title. See _lib/session-label.js.
+const PROJECTS_DIR = path.join(
+  process.env.HOME || process.env.USERPROFILE || "~",
+  ".claude",
+  "projects"
+);
 const SIGNAL_FILE = path.join(HOOKS_DIR, "claude-signal");
 const FOCUS_SIGNAL_FILE = path.join(HOOKS_DIR, "claude-notifier-focus");
 const CONFIG_FILE = path.join(HOOKS_DIR, "claude-notifier-config.json");
@@ -10,6 +17,7 @@ const TASK_START_DIR = path.join(HOOKS_DIR, "claude-notifier-task-start");
 
 module.exports = {
   HOOKS_DIR,
+  PROJECTS_DIR,
   MUTE_FLAG,
   SIGNAL_FILE,
   FOCUS_SIGNAL_FILE,
