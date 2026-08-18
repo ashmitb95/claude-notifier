@@ -33,7 +33,7 @@ if ($level -eq 'sound+popup' -or $level -eq 'sound') {
 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'popup') {
-    Show-NotifierNotification -Message 'Claude subagent finished.'
+    Show-NotifierNotification -Message 'Claude subagent finished.' -Title (Get-NotifierTitle $cwd)
 }
 
 exit 0

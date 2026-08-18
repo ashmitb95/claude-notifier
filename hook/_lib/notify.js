@@ -31,7 +31,11 @@ function findTerminalNotifier() {
 }
 
 /**
- * Show an OS notification. Title is always "Claude Notifier".
+ * Show an OS notification.
+ *
+ * opts.title: notification title — pass the workspace name (see
+ * _lib/title.js) so notifications from parallel projects are distinguishable.
+ * Defaults to "Claude Notifier" when omitted.
  *
  * On macOS: when opts.preferTerminalNotifier is true and terminal-notifier is
  * installed, use it (gives clickable notifications that focus VS Code). Else
@@ -53,10 +57,11 @@ function showNotification(message, opts = {}) {
   if (isInsideCmux()) return;
   const preferTn = !!opts.preferTerminalNotifier;
   const executeCmd = opts.executeCmd;
+  const title = opts.title ? String(opts.title) : TITLE;
   try {
     if (USE_WIN) {
       const safeMsg = psSingleQuoteEscape(message);
-      const safeTitle = psSingleQuoteEscape(TITLE);
+      const safeTitle = psSingleQuoteEscape(title);
       const ps = `Add-Type -AssemblyName System.Windows.Forms; $n=New-Object System.Windows.Forms.NotifyIcon; $n.Icon=[System.Drawing.SystemIcons]::Information; $n.Visible=$true; $n.ShowBalloonTip(3000,'${safeTitle}','${safeMsg}',[System.Windows.Forms.ToolTipIcon]::None); Start-Sleep -m 500; $n.Dispose()`;
       execSync(
         `${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`,
@@ -64,7 +69,7 @@ function showNotification(message, opts = {}) {
       );
     } else if (IS_LINUX) {
       // execFileSync bypasses the shell — no shell-escaping concerns for $ or `.
-      execFileSync("notify-send", ["--app-name=Claude Code", TITLE, String(message)], {
+      execFileSync("notify-send", ["--app-name=Claude Code", title, String(message)], {
         stdio: "ignore",
         timeout: 5000,
       });
@@ -72,7 +77,7 @@ function showNotification(message, opts = {}) {
       if (preferTn) {
         const tn = findTerminalNotifier();
         if (tn) {
-          const args = ["-title", TITLE, "-message", String(message)];
+          const args = ["-title", title, "-message", String(message)];
           if (executeCmd) args.push("-execute", executeCmd);
           execFileSync(tn, args, { stdio: "ignore" });
           return;
@@ -80,9 +85,12 @@ function showNotification(message, opts = {}) {
       }
       // execFileSync bypasses the shell; AppleScript still needs its own \ and " escaping.
       const escaped = appleScriptEscape(message);
-      execFileSync("osascript", ["-e", `display notification "${escaped}" with title "${TITLE}"`], {
-        stdio: "ignore",
-      });
+      const escapedTitle = appleScriptEscape(title);
+      execFileSync(
+        "osascript",
+        ["-e", `display notification "${escaped}" with title "${escapedTitle}"`],
+        { stdio: "ignore" }
+      );
     }
   } catch {}
 }

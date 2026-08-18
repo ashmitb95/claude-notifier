@@ -95,6 +95,7 @@ A dedicated `SubagentStop` hook fires when a `Task` subagent finishes. The level
 ## How it works
 
 - **Per-session dedup.** Rapid back-to-back events within a single Claude session coalesce automatically — one notification per stage, not a flood. A stage advances when you send your next prompt or after ~30 minutes of idle time.
+- **Project-labelled notifications.** The notification title is the workspace name (or the project directory's name when the hook fires outside VS Code), so with several projects open you can tell which one just finished without opening anything.
 - **Bundled fallback sounds.** If the configured system sound file is missing on disk, a bundled WAV plays so you still hear something.
 - **Defers to other notification hosts.** Inside VS Code, the extension takes over from the hook fallback for the owning window. Inside [cmux](https://github.com/manaflow-ai/cmux), the hook detects cmux's `CMUX_CLAUDE_HOOK_CMUX_BIN` env var and skips its own sound + popup so cmux's native banner doesn't get double-stacked. Inside [Cursor](https://cursor.com) — which runs `~/.claude/settings.json` hooks from its own Composer agent — the hook detects Cursor's `CURSOR_*` environment and stays silent, so you don't get a notification for work that isn't a Claude Code session.
 - **Diagnostic log.** `View → Output → Claude Notifier` shows activation, signal receipts, dedup decisions, and configuration warnings — useful when debugging "I didn't get a notification."

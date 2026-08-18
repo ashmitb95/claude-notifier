@@ -35,7 +35,7 @@ if ($level -eq 'sound+popup' -or $level -eq 'sound') {
 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'popup') {
-    Show-NotifierNotification -Message 'Claude is asking you a question.'
+    Show-NotifierNotification -Message 'Claude is asking you a question.' -Title (Get-NotifierTitle $data.cwd)
 }
 
 Write-NotifierSignal -Reason 'question' -SessionId $data.session_id
