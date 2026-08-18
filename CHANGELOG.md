@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.7.0] - 2026-08-19
+
+### Added
+
+- **Notifications are titled with the workspace name.** The OS notification title was hardcoded to "Claude Notifier" on every path, so with several projects open the banners were indistinguishable — you had to switch windows to find out which one finished. Each notification is now titled with the project instead: a saved multi-root workspace uses the `.code-workspace` name, otherwise the workspace folder owning the firing `cwd` (falling back to the first folder), and a folderless window uses the `cwd`'s own name. Hook-fired notifications use the leaf of the firing directory. Both fall back to "Claude Notifier" when nothing resolves. Contributed by [@marco-lavagnino](https://github.com/marco-lavagnino). ([#87](https://github.com/ashmitb95/claude-notifier/pull/87))
+
+### Fixed
+
+- **An apostrophe in a notification message broke the macOS fallback notification.** When `terminal-notifier` isn't installed, the extension posts notifications via `osascript`, and the AppleScript was embedded in a single-quoted shell string — so any message containing `'` produced a malformed command and no notification at all. The script is now shell-quoted as a whole. Pre-existing since the osascript fallback was added; found while making the title user-supplied data. ([#87](https://github.com/ashmitb95/claude-notifier/pull/87))
+
 ## [3.6.0] - 2026-07-10
 
 ### Added
