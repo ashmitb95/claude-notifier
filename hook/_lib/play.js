@@ -1,7 +1,17 @@
 const fs = require("fs");
-const { execSync } = require("child_process");
+const { execSync, execFileSync } = require("child_process");
 const { USE_WIN, IS_LINUX, PS_BIN } = require("./platform");
 const { isInsideCmux } = require("./cmux");
+
+// PowerShell single-quoted strings escape ' as ''. Anything else is literal.
+function psSingleQuoteEscape(s) {
+  return String(s).replace(/'/g, "''");
+}
+
+// POSIX single-quoted literal — nothing inside is special except ' itself.
+function shQuote(s) {
+  return `'${String(s).replace(/'/g, `'\\''`)}'`;
+}
 
 function clampVolume(v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return 1;
@@ -32,7 +42,7 @@ function playSound(primaryPath, fallbackPath, volume = 1) {
   const v = clampVolume(volume);
   try {
     if (USE_WIN) {
-      const ps = `$s='${soundPath}'; if(Test-Path $s){(New-Object Media.SoundPlayer $s).PlaySync()}else{[console]::Beep(800,300)}`;
+      const ps = `$s='${psSingleQuoteEscape(soundPath)}'; if(Test-Path $s){(New-Object Media.SoundPlayer $s).PlaySync()}else{[console]::Beep(800,300)}`;
       execSync(
         `${PS_BIN} -NoProfile -NonInteractive -EncodedCommand ${Buffer.from(ps, "utf16le").toString("base64")}`,
         { stdio: "ignore", timeout: 5000 }
@@ -43,12 +53,16 @@ function playSound(primaryPath, fallbackPath, volume = 1) {
       // resort. pw-play --volume is a 0.0–1.0+ linear factor; paplay --volume a
       // 16-bit scale where 65536 = 100%.
       const paVolume = Math.round(v * 65536);
+      // Chaining the three players with || needs a shell, so the path is
+      // quoted rather than passed as an argv entry.
+      const q = shQuote(soundPath);
       execSync(
-        `pw-play --volume=${v} "${soundPath}" 2>/dev/null || paplay --volume=${paVolume} "${soundPath}" 2>/dev/null || aplay "${soundPath}" 2>/dev/null`,
+        `pw-play --volume=${v} ${q} 2>/dev/null || paplay --volume=${paVolume} ${q} 2>/dev/null || aplay ${q} 2>/dev/null`,
         { stdio: "ignore", timeout: 5000 }
       );
     } else {
-      execSync(`afplay -v ${v} "${soundPath}"`, { stdio: "ignore" });
+      // execFileSync bypasses the shell — no quoting concerns for the path.
+      execFileSync("afplay", ["-v", String(v), soundPath], { stdio: "ignore" });
     }
   } catch {}
 }
