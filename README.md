@@ -9,10 +9,11 @@ Stop watching the screen — go grab a coffee and let Claude ping you when it ne
 
 Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code — on **macOS**, **Windows**, **WSL**, and **Linux**, including **remote hosts over SSH**.
 
-## What's new — 3.6.0
+## What's new — 3.7.1
 
 ![The status-bar control panel, now with the Auto-mute when focused toggle](media/popup-screen.png)
 
+- **Project-labelled notifications.** Each notification is now titled with the workspace name, so with several projects open you can tell at a glance which one just finished.
 - **Auto-mute when focused.** Opt-in setting that mutes the completion sound and popups while the VS Code window running the task is focused — you can already see it working, so the ping is redundant. Scoped per-window, so a task finishing in a background window still notifies. Toggle it right from the panel above (details under [Auto-mute when focused](#auto-mute-when-focused)).
 - **No notifications inside Cursor.** Cursor runs the same `~/.claude` hooks from its own Composer agent; the notifier now detects Cursor and stays silent there instead of firing for work that isn't a Claude Code session.
 - **No stray notifications from a folderless window.** A VS Code window with no folder open no longer fires a duplicate notification for every project.
