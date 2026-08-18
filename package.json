@@ -1,6 +1,6 @@
 {
   "name": "claude-notifier",
-  "displayName": "Claude & Codex Notifier",
+  "displayName": "Claude Notifier",
   "description": "Plays distinct sounds when Claude Code or Codex finishes a task or needs your input",
   "version": "3.8.0",
   "icon": "media/icon.png",
@@ -62,7 +62,7 @@
       }
     ],
     "configuration": {
-      "title": "Claude & Codex Notifier",
+      "title": "Claude Notifier",
       "properties": {
         "claudeNotifier.taskCompleted.level": {
           "type": "string",

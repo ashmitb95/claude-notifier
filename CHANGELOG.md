@@ -10,7 +10,7 @@
 
 ### Changed
 
-- **Renamed to "Claude & Codex Notifier"** on the Marketplace. The extension ID (`SingularityInc.claude-notifier`), all command IDs, and every `claudeNotifier.*` setting key are unchanged, so installs, ratings, keybindings, and existing settings all carry over untouched. Added the `keywords` the manifest had never declared, and an explicit note that this is an independent extension not affiliated with Anthropic or OpenAI.
+- Added the `keywords` the manifest had never declared, and an explicit note that this is an independent extension not affiliated with Anthropic or OpenAI. The Marketplace title is unchanged for now.
 
 ## [3.7.0] - 2026-08-19
 
