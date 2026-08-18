@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.8.0] - 2026-08-19
+
+### Added
+
+- **Codex support.** Codex sessions now drive the same notification pipeline as Claude Code — the same sounds, per-event levels, mute, auto-mute, threshold, dedup, and remote audio. Codex's hook system turns out to be a close clone of Claude Code's, down to the payload field names (`cwd`, `session_id`, `stop_hook_active`), so the existing hook scripts serve both agents; they take an `--agent` argument that only decides how notifications are worded. The extension registers `Stop`, `PermissionRequest`, `UserPromptSubmit`, and `SubagentStop` in `~/.codex/hooks.json` (honouring `CODEX_HOME`), merging alongside any hooks another tool registered and leaving them intact. Registration is skipped entirely when Codex isn't installed, so no `~/.codex` directory is created for users who don't have it; `claudeNotifier.codex.enabled` opts out otherwise. Notifier state — signal file, config, mute flag, active markers — stays in `~/.claude/hooks/` for every agent, so there is still one signal file and one watcher. Codex has no `AskUserQuestion` analog, so `asksQuestion` remains Claude-Code-only. Setup and troubleshooting: [docs/CODEX.md](docs/CODEX.md). ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
+
+  Codex gates newly registered hooks behind a trust prompt, and the extension deliberately does not grant that trust on the user's behalf — it could, since trust is just a hash recorded in `config.toml`, but that would defeat a control Codex added on purpose. Because Codex pins trust to a hash of the *registration entry* rather than the script contents, approving once survives extension upgrades that rewrite the scripts; the registered command line is kept byte-stable to preserve that. Our entry is registered first for each event so a third-party hook appearing later can't shift the index its trust key is derived from.
+
+### Changed
+
+- **Renamed to "Claude & Codex Notifier"** on the Marketplace. The extension ID (`SingularityInc.claude-notifier`), all command IDs, and every `claudeNotifier.*` setting key are unchanged, so installs, ratings, keybindings, and existing settings all carry over untouched. Added the `keywords` the manifest had never declared, and an explicit note that this is an independent extension not affiliated with Anthropic or OpenAI.
+
 ## [3.7.0] - 2026-08-19
 
 ### Added

@@ -17,6 +17,13 @@ export const TASK_START_DIR = path.join(HOOKS_DIR, "claude-notifier-task-start")
 export const ACTIVE_DIR = path.join(HOOKS_DIR, "claude-notifier-active.d");
 export const OWN_PID_FILE = path.join(ACTIVE_DIR, String(process.pid));
 
+// Codex keeps its own agent home, overridable via CODEX_HOME. Only the hook
+// registry lives there; the notifier's own state (signal file, config, mute
+// flag, active markers) stays in HOOKS_DIR for every agent, so there is one
+// signal file and one watcher regardless of how many agents are installed.
+export const CODEX_DIR = process.env.CODEX_HOME || path.join(HOME, ".codex");
+export const CODEX_HOOKS_FILE = path.join(CODEX_DIR, "hooks.json");
+
 export const IS_WIN = process.platform === "win32";
 export const IS_MAC = process.platform === "darwin";
 export const IS_LINUX = process.platform === "linux";

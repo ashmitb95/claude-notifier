@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { ACTIVE_DIR, OWN_PID_FILE } from "./paths";
 import { syncConfig } from "./settings/sync";
 import { setupHooks } from "./hooks/lifecycle";
+import { setupCodexIfEnabled } from "./hooks/codex-setup";
 import { initDiscovery, installTerminalNotifierFlow } from "./notifications/terminal-notifier";
 import { writeOwnPidFile, cleanStalePidFiles } from "./routing/cwd";
 import { startFocusSignalWatcher } from "./routing/focus";
@@ -24,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
   initLogger(context);
   log("activate: extensionPath=", context.extensionPath);
   setupHooks(context.extensionPath);
+  setupCodexIfEnabled();
   syncConfig();
   cleanupStaleMarkers(24 * 60 * 60 * 1000);
   initDiscovery();

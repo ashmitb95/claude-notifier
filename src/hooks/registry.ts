@@ -6,6 +6,11 @@ export interface HookDef {
   baseName: string;
   /** Claude Code hook type key in settings.json. */
   type: string;
+  /**
+   * Codex event name for hooks.json. Omitted when Codex has no equivalent
+   * event, which excludes the hook from the Codex registration entirely.
+   */
+  codexType?: string;
   /** Optional matcher for PreToolUse hooks. */
   matcher?: string;
   /** Key for VS Code config (claudeNotifier.<eventKey>.level/.sound). */
@@ -18,12 +23,14 @@ export const HOOKS: HookDef[] = [
   {
     baseName: "claude-notifier-on-stop",
     type: "Stop",
+    codexType: "Stop",
     eventKey: "taskCompleted",
     defaultSound: "Hero",
   },
   {
     baseName: "claude-notifier-on-permission",
     type: "PermissionRequest",
+    codexType: "PermissionRequest",
     eventKey: "needsPermission",
     defaultSound: "Glass",
   },
@@ -42,6 +49,7 @@ export const HOOKS: HookDef[] = [
     // (syncConfig, etc.) don't choke on undefined values.
     baseName: "claude-notifier-on-prompt",
     type: "UserPromptSubmit",
+    codexType: "UserPromptSubmit",
     eventKey: "userPromptSubmit",
     defaultSound: "",
   },
@@ -51,6 +59,7 @@ export const HOOKS: HookDef[] = [
     // detail rather than something the user is waiting on.
     baseName: "claude-notifier-on-subagent-stop",
     type: "SubagentStop",
+    codexType: "SubagentStop",
     eventKey: "subagentCompleted",
     defaultSound: "Pop",
   },

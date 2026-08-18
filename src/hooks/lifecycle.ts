@@ -12,6 +12,7 @@ import {
 import { HOOKS, hookDestPath } from "./registry";
 import { hookCmd } from "./cmd";
 import { readSettings, writeSettings, stripClaudeNotifierHooks } from "../settings/claude";
+import { teardownCodexHooks } from "./codex";
 
 const HOOK_RUNNER_PREFIX = IS_WIN ? "powershell" : "node";
 
@@ -148,6 +149,8 @@ function syncFile(src: string, dest: string): void {
  * uninstall.ts when the extension is uninstalled.
  */
 export function teardownHooks(): void {
+  teardownCodexHooks();
+
   const legacyNames = [
     "claude-notifier-on-stop",
     "claude-notifier-on-permission",

@@ -1,13 +1,17 @@
-# Claude Notifier
+# Claude & Codex Notifier
 
 [![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/SingularityInc.claude-notifier)](https://marketplace.visualstudio.com/items?itemName=SingularityInc.claude-notifier)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/ashmitb95)
 
-Plays a sound and shows a notification when [Claude Code](https://claude.com/claude-code) finishes a task, needs permission, or asks a question.
+Plays a sound and shows a notification when [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex) finishes a task, needs permission, or asks a question.
 
-Stop watching the screen — go grab a coffee and let Claude ping you when it needs you.
+Stop watching the screen — go grab a coffee and let your agent ping you when it needs you.
 
-Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code — on **macOS**, **Windows**, **WSL**, and **Linux**, including **remote hosts over SSH**.
+Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code or Codex — on **macOS**, **Windows**, **WSL**, and **Linux**, including **remote hosts over SSH**.
+
+## What's new — 3.8.0
+
+- **Codex support.** Codex sessions now drive the same notifications as Claude Code — same sounds, same per-event levels, same mute and auto-mute behaviour. The extension registers hooks in `~/.codex/hooks.json` when it finds Codex installed, and does nothing at all when it doesn't. Codex asks you to trust the hooks once before they start firing. See **[docs/CODEX.md](docs/CODEX.md)**. ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
 
 ## What's new — 3.7.1
 
@@ -101,6 +105,14 @@ A dedicated `SubagentStop` hook fires when a `Task` subagent finishes. The level
 - **Defers to other notification hosts.** Inside VS Code, the extension takes over from the hook fallback for the owning window. Inside [cmux](https://github.com/manaflow-ai/cmux), the hook detects cmux's `CMUX_CLAUDE_HOOK_CMUX_BIN` env var and skips its own sound + popup so cmux's native banner doesn't get double-stacked. Inside [Cursor](https://cursor.com) — which runs `~/.claude/settings.json` hooks from its own Composer agent — the hook detects Cursor's `CURSOR_*` environment and stays silent, so you don't get a notification for work that isn't a Claude Code session.
 - **Diagnostic log.** `View → Output → Claude Notifier` shows activation, signal receipts, dedup decisions, and configuration warnings — useful when debugging "I didn't get a notification."
 
+### Codex
+
+Codex sessions run through the same pipeline as Claude Code. The extension registers its hooks in `~/.codex/hooks.json` when it finds Codex installed; if you don't have Codex, no `~/.codex` directory is created. Opt out with `claudeNotifier.codex.enabled`.
+
+**Codex asks you to trust the hooks once** before it will run them — until you approve, Codex sessions stay silent. The extension doesn't grant that trust for you. You only approve once; extension upgrades don't re-trigger the prompt.
+
+The one gap is the "asks a question" sound: Codex has no `AskUserQuestion` equivalent, so that event only fires for Claude Code. Full detail in **[docs/CODEX.md](docs/CODEX.md)**.
+
 ### Clickable macOS notifications (optional)
 
 By default, macOS attributes `osascript` notifications to the Script Editor bundle, so clicking one opens Script Editor instead of focusing VS Code. To get clickable notifications that focus the specific window the notification fired from, install [`terminal-notifier`](https://github.com/julienXX/terminal-notifier):
@@ -159,3 +171,7 @@ Thanks to everyone who has contributed to this project:
 ## License
 
 [GPL-3.0](LICENSE.md)
+
+---
+
+An independent, community-built extension. Not affiliated with, endorsed by, or sponsored by Anthropic or OpenAI. "Claude" is a trademark of Anthropic; "Codex" is a trademark of OpenAI.
