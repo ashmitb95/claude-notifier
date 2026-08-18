@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **No sound on Windows for users whose account name contains an apostrophe.** Both sound players built the PowerShell script by pasting the sound path into a single-quoted literal without doubling `'`, so a path like `C:\Users\O'Brien\.claude\hooks\_lib\sounds\complete.wav` — the bundled fallback, which lives under the home directory — produced a malformed script. Both call sites swallow errors, so the sound just silently didn't play. The path is now escaped for PowerShell. The macOS and Linux players had the same shape (the path was pasted into a double-quoted shell string, where `"`, `$`, `` ` `` and `\` are all live); macOS now spawns `afplay` without a shell at all, and Linux — which needs a shell to chain its three players with `||` — shell-quotes the path. ([#88](https://github.com/ashmitb95/claude-notifier/issues/88))
+
 ## [3.7.0] - 2026-08-19
 
 ### Added
