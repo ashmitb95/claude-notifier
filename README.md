@@ -1,4 +1,4 @@
-# Claude Notifier
+# Claude & Codex Notifier
 
 **supports Codex too**
 
