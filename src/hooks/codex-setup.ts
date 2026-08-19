@@ -25,8 +25,8 @@ export function setupCodexIfEnabled(): void {
   log("codex: wrote hook registration to", CODEX_HOOKS_FILE);
   vscode.window
     .showInformationMessage(
-      "Claude Notifier registered its hooks with Codex. Codex will ask you to trust them before " +
-        "notifications start working.",
+      "Claude Notifier registered its hooks with Codex. Run `codex` in a terminal once and choose " +
+        "\u201cTrust all and continue\u201d \u2014 Codex won't run them until you do.",
       "Learn more"
     )
     .then((choice) => {

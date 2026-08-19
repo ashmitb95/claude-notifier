@@ -18,9 +18,26 @@ If you don't have Codex, nothing happens — no `~/.codex` directory is created.
 
 ## Trusting the hooks
 
-**Codex will not run a newly registered hook until you trust it.** The first time the extension
-writes `hooks.json`, Codex shows the hooks as untrusted and asks you to approve them. Until you do,
-Codex sessions stay silent.
+**Codex will not run a newly registered hook until you trust it.** After the extension writes
+`hooks.json`, run `codex` in a terminal. It opens a **Hooks need review** screen at startup —
+_"4 hooks are new or changed"_ — offering **Review hooks**, **Trust all and continue**, or
+**Continue without trusting (hooks won't run)**. Approve, and notifications start firing.
+
+Until you do, Codex sessions stay silent, and nothing surfaces the reason: the hooks parse cleanly,
+`hooks/list` reports no warnings or errors, and Codex simply never invokes them. The registration
+being present in `hooks.json` is not evidence that it runs — check `trustStatus`.
+
+Trust is recorded in `~/.codex/config.toml`, keyed by
+`<hooks.json path>:<snake_case_event>:<groupIdx>:<hookIdx>` with no project component, so approving
+once covers every project, and the Codex VS Code extension picks it up too. The terminal is the
+place to grant it: the app-server protocol the VS Code extension speaks exposes only `hooks/list`,
+with no method for granting trust. You can revisit the list later with `/hooks`, or under
+`Tools & setup` → `Hooks`.
+
+Trusted hooks run *outside* Codex's sandbox — its own review screen says so ("Hooks can run outside
+the sandbox after you trust them"), which is what lets them play sounds. Codex's seatbelt sandbox
+denies CoreAudio, so a sandboxed `afplay` fails with `AudioQueueStart failed (-66680)`; hooks are
+not subject to that.
 
 The extension does not grant that trust on your behalf. It could — trust is just a hash recorded in
 `config.toml` — but that would defeat a control Codex added deliberately, and it would break the
@@ -66,13 +83,15 @@ The setting still applies to Claude Code.
 `View → Output → Claude Notifier` logs whether the Codex registration was written.
 
 To see what Codex itself makes of the registration — including trust status and any parse errors —
-ask its app server directly:
+ask its app server directly. The `initialized` notification and short waits matter; without them,
+`hooks/list` can come back empty even when the registration is valid:
 
 ```bash
-codex app-server <<'EOF'
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"probe","version":"1"}}}
-{"jsonrpc":"2.0","id":2,"method":"hooks/list","params":{"cwds":["/path/to/your/project"]}}
-EOF
+{ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"probe","version":"1"}}}'
+  sleep 1
+  printf '%s\n' '{"jsonrpc":"2.0","method":"initialized","params":{}}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"hooks/list","params":{"cwds":["/path/to/your/project"]}}'
+  sleep 3; } | codex app-server
 ```
 
 Each entry reports `trustStatus` (`trusted`, `untrusted`, or `modified`) and `timeoutSec`. A

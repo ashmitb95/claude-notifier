@@ -9,13 +9,14 @@ Stop watching the screen — go grab a coffee and let your agent ping you when i
 
 Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code or Codex — on **macOS**, **Windows**, **WSL**, and **Linux**, including **remote hosts over SSH**.
 
-## What's new — 3.8.0
+## What's new — 4.0.0
 
-- **Codex support.** Codex sessions now drive the same notifications as Claude Code — same sounds, same per-event levels, same mute and auto-mute behaviour. The extension registers hooks in `~/.codex/hooks.json` when it finds Codex installed, and does nothing at all when it doesn't. Codex asks you to trust the hooks once before they start firing. See **[docs/CODEX.md](docs/CODEX.md)**. ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
+- **Codex support.** [Codex](https://developers.openai.com/codex) sessions now drive the same notifications as Claude Code — same sounds, same per-event levels, same mute and auto-mute behaviour. The extension registers hooks in `~/.codex/hooks.json` when it finds Codex installed, and does nothing at all when it doesn't. ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
+
+  **One setup step:** Codex won't run newly registered hooks until you trust them, so a fresh install is silent until you do. Run `codex` in a terminal once and pick **Trust all and continue** — full steps under [Codex](#codex).
 
 ## What's new — 3.7.1
 
-![The status-bar control panel, now with the Auto-mute when focused toggle](media/popup-screen.png)
 
 - **Project-labelled notifications.** Each notification is now titled with the workspace name, so with several projects open you can tell at a glance which one just finished.
 - **Auto-mute when focused.** Opt-in setting that mutes the completion sound and popups while the VS Code window running the task is focused — you can already see it working, so the ping is redundant. Scoped per-window, so a task finishing in a background window still notifies. Toggle it right from the panel above (details under [Auto-mute when focused](#auto-mute-when-focused)).
@@ -24,6 +25,8 @@ Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Cl
 - **Remote audio.** When Claude runs on a remote host (SSH, WSL, dev container), notification sounds now play on your **local** machine instead of the headless remote — see [Remote hosts](#remote-hosts-ssh-wsl-dev-containers).
 - **Per-session disable.** Set `CLAUDE_NOTIFIER_DISABLE` to silence the notifier for a single shell/session — handy on shared SSH hosts (see [below](#disable-per-session-claude_notifier_disable)).
 - **Status-bar control panel.** Hover the **Claude** entry in the status bar for volume, per-event sound preview/swap, and the minimum-task-duration threshold.
+
+![The status-bar control panel, now with the Auto-mute when focused toggle](media/popup-screen.png)
 
 ## Install
 
@@ -55,6 +58,59 @@ curl -fsSL https://raw.githubusercontent.com/ashmitb95/claude-notifier/main/unin
 ```
 
 **Windows:** install the VSCode extension. It auto-configures the PowerShell hooks; no separate CLI installer is needed.
+
+## Codex
+
+Codex sessions run through the same pipeline as Claude Code — same sounds, same per-event levels, same mute, auto-mute, and threshold settings. The extension registers its hooks in `~/.codex/hooks.json` when it finds Codex installed; if you don't have Codex, no `~/.codex` directory is created. Opt out any time with `claudeNotifier.codex.enabled`.
+
+### Turning on notifications for Codex
+
+**Codex will not run a newly registered hook until you trust it**, so there is one manual step after installing the extension. That gate is deliberate on Codex's part, and the extension doesn't grant the trust for you.
+
+1. Install or reload the extension. It writes four hook registrations to `~/.codex/hooks.json` — `Stop`, `PermissionRequest`, `UserPromptSubmit`, and `SubagentStop`.
+2. Run `codex` in a terminal. At startup it shows **Hooks need review** — _"4 hooks are new or changed."_
+3. Choose **Review hooks** to read each entry first, or go straight to **Trust all and continue**.
+4. Carry on. Notifications fire from that point on.
+
+You only do this once, and only in the terminal — trust is recorded in `~/.codex/config.toml` and applies to every project and to the Codex VS Code extension too. Codex pins it to a hash of the *registration entry* rather than the hook script's contents, so extension upgrades that rewrite the scripts don't re-trigger the prompt. Revisit the list any time with `/hooks`, or under `Tools & setup` → `Hooks`.
+
+Picking **Continue without trusting** leaves the hooks registered but inert: Codex stays silent until you trust them.
+
+The one gap is the "asks a question" sound — Codex has no `AskUserQuestion` equivalent, so that event only fires for Claude Code.
+
+### Troubleshooting: no Codex notifications
+
+Untrusted hooks are the usual cause, and they're easy to miss: Codex registers them, reports no error, and simply never runs them. Ask Codex's app server what it makes of the registration:
+
+```bash
+{ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"probe","version":"1"}}}'
+  sleep 1
+  printf '%s\n' '{"jsonrpc":"2.0","method":"initialized","params":{}}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"hooks/list","params":{"cwds":["/path/to/your/project"]}}'
+  sleep 3; } | codex app-server
+```
+
+Each entry reports a `trustStatus`:
+
+| Status | Meaning |
+| --- | --- |
+| `trusted` | Good — the hook runs. |
+| `untrusted` | Registered but never invoked. Run `codex` and trust the hooks, as above. |
+| `modified` | The registration changed since you approved it. Re-approve under `/hooks`. |
+
+Or read `~/.codex/config.toml` directly — a trusted hook has a `trusted_hash` entry:
+
+```toml
+[hooks.state."/Users/you/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:…"
+```
+
+If that all looks right and Codex is still silent:
+
+- **No `~/.codex/hooks.json` at all.** The extension only writes it when `~/.codex` already exists, so it skips users who don't have Codex. Run Codex once, then reload VS Code. Check that `claudeNotifier.codex.enabled` is on, and look for the registration line in `View → Output → Claude Notifier`.
+- **Sounds work in Codex but not from a plain terminal session,** or vice versa. That's the notifier's own routing, not Codex — the extension handles playback for any directory an open VS Code window owns, and the hook plays the sound itself otherwise.
+
+Full detail in **[docs/CODEX.md](docs/CODEX.md)**.
 
 ## Remote hosts (SSH, WSL, dev containers)
 
@@ -104,14 +160,6 @@ A dedicated `SubagentStop` hook fires when a `Task` subagent finishes. The level
 - **Bundled fallback sounds.** If the configured system sound file is missing on disk, a bundled WAV plays so you still hear something.
 - **Defers to other notification hosts.** Inside VS Code, the extension takes over from the hook fallback for the owning window. Inside [cmux](https://github.com/manaflow-ai/cmux), the hook detects cmux's `CMUX_CLAUDE_HOOK_CMUX_BIN` env var and skips its own sound + popup so cmux's native banner doesn't get double-stacked. Inside [Cursor](https://cursor.com) — which runs `~/.claude/settings.json` hooks from its own Composer agent — the hook detects Cursor's `CURSOR_*` environment and stays silent, so you don't get a notification for work that isn't a Claude Code session.
 - **Diagnostic log.** `View → Output → Claude Notifier` shows activation, signal receipts, dedup decisions, and configuration warnings — useful when debugging "I didn't get a notification."
-
-### Codex
-
-Codex sessions run through the same pipeline as Claude Code. The extension registers its hooks in `~/.codex/hooks.json` when it finds Codex installed; if you don't have Codex, no `~/.codex` directory is created. Opt out with `claudeNotifier.codex.enabled`.
-
-**Codex asks you to trust the hooks once** before it will run them — until you approve, Codex sessions stay silent. The extension doesn't grant that trust for you. You only approve once; extension upgrades don't re-trigger the prompt.
-
-The one gap is the "asks a question" sound: Codex has no `AskUserQuestion` equivalent, so that event only fires for Claude Code. Full detail in **[docs/CODEX.md](docs/CODEX.md)**.
 
 ### Clickable macOS notifications (optional)
 

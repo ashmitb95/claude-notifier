@@ -1,12 +1,14 @@
 # Changelog
 
-## [3.8.0] - 2026-08-19
+## [4.0.0] - 2026-08-19
 
 ### Added
 
 - **Codex support.** Codex sessions now drive the same notification pipeline as Claude Code — the same sounds, per-event levels, mute, auto-mute, threshold, dedup, and remote audio. Codex's hook system turns out to be a close clone of Claude Code's, down to the payload field names (`cwd`, `session_id`, `stop_hook_active`), so the existing hook scripts serve both agents; they take an `--agent` argument that only decides how notifications are worded. The extension registers `Stop`, `PermissionRequest`, `UserPromptSubmit`, and `SubagentStop` in `~/.codex/hooks.json` (honouring `CODEX_HOME`), merging alongside any hooks another tool registered and leaving them intact. Registration is skipped entirely when Codex isn't installed, so no `~/.codex` directory is created for users who don't have it; `claudeNotifier.codex.enabled` opts out otherwise. Notifier state — signal file, config, mute flag, active markers — stays in `~/.claude/hooks/` for every agent, so there is still one signal file and one watcher. Codex has no `AskUserQuestion` analog, so `asksQuestion` remains Claude-Code-only. Setup and troubleshooting: [docs/CODEX.md](docs/CODEX.md). ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
 
   Codex gates newly registered hooks behind a trust prompt, and the extension deliberately does not grant that trust on the user's behalf — it could, since trust is just a hash recorded in `config.toml`, but that would defeat a control Codex added on purpose. Because Codex pins trust to a hash of the *registration entry* rather than the script contents, approving once survives extension upgrades that rewrite the scripts; the registered command line is kept byte-stable to preserve that. Our entry is registered first for each event so a third-party hook appearing later can't shift the index its trust key is derived from.
+
+  Trusting is a one-time step in the **terminal**: `codex` opens a "Hooks need review" screen at startup offering *Trust all and continue*. It has to be the terminal — the app-server protocol the Codex VS Code extension speaks exposes only `hooks/list`, with no method for granting trust. The trust key carries no project component, so approving once covers every project and the VS Code extension alike. Until it happens, the failure is silent and gives no hint of the cause: the hooks parse cleanly, `hooks/list` reports no warnings or errors, and Codex just never invokes them. The README and [docs/CODEX.md](docs/CODEX.md) now walk through the screen by name, and the registration toast points at it rather than saying Codex will ask — it doesn't ask unless you start it in a terminal.
 
 ### Changed
 
