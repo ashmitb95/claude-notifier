@@ -27,6 +27,15 @@ Until you do, Codex sessions stay silent, and nothing surfaces the reason: the h
 `hooks/list` reports no warnings or errors, and Codex simply never invokes them. The registration
 being present in `hooks.json` is not evidence that it runs — check `trustStatus`.
 
+If `codex` isn't on your `PATH` — the common case when Codex arrived as the ChatGPT VS Code
+extension rather than a standalone install — the CLI is bundled inside the extension:
+
+```sh
+export PATH="$(dirname "$(ls -d ~/.vscode/extensions/openai.chatgpt-*/bin/*/codex | head -1)")":$PATH
+```
+
+The terminal is only needed for this one approval; VS Code sessions pick the trust up afterwards.
+
 Trust is recorded in `~/.codex/config.toml`, keyed by
 `<hooks.json path>:<snake_case_event>:<groupIdx>:<hookIdx>` with no project component, so approving
 once covers every project, and the Codex VS Code extension picks it up too. The terminal is the

@@ -72,6 +72,14 @@ Codex sessions run through the same pipeline as Claude Code — same sounds, sam
 3. Choose **Review hooks** to read each entry first, or go straight to **Trust all and continue**.
 4. Carry on. Notifications fire from that point on.
 
+> **`zsh: command not found: codex`?** If you got Codex as the ChatGPT VS Code extension, the CLI is bundled inside it and isn't on your `PATH`. Add it for the current shell, then run `codex`:
+>
+> ```sh
+> export PATH="$(dirname "$(ls -d ~/.vscode/extensions/openai.chatgpt-*/bin/*/codex | head -1)")":$PATH
+> ```
+>
+> Installing the standalone CLI (`npm i -g @openai/codex`) works too. You only need it for this one-time approval — after that, Codex inside VS Code picks up the trust and you never need the terminal again.
+
 You only do this once, and only in the terminal — trust is recorded in `~/.codex/config.toml` and applies to every project and to the Codex VS Code extension too. Codex pins it to a hash of the *registration entry* rather than the hook script's contents, so extension upgrades that rewrite the scripts don't re-trigger the prompt. Revisit the list any time with `/hooks`, or under `Tools & setup` → `Hooks`.
 
 Picking **Continue without trusting** leaves the hooks registered but inert: Codex stays silent until you trust them.
