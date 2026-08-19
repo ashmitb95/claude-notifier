@@ -5,15 +5,20 @@
 [![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/SingularityInc.claude-notifier)](https://marketplace.visualstudio.com/items?itemName=SingularityInc.claude-notifier)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/ashmitb95)
 
-Plays a sound and shows a notification when [Claude Code](https://claude.com/claude-code) finishes a task, needs permission, or asks a question.
+Plays a sound and shows a notification when [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex) finishes a task, needs permission, or asks a question.
 
-Stop watching the screen — go grab a coffee and let Claude ping you when it needs you.
+Stop watching the screen — go grab a coffee and let your agent ping you when it needs you.
 
-Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code — on **macOS**, **Windows**, **WSL**, and **Linux**, including **remote hosts over SSH**.
+Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code or Codex — on **macOS**, **Windows**, **WSL**, and **Linux**, including **remote hosts over SSH**.
+
+## What's new — 4.0.0
+
+- **Codex support.** [Codex](https://developers.openai.com/codex) sessions now drive the same notifications as Claude Code — same sounds, same per-event levels, same mute and auto-mute behaviour. The extension registers hooks in `~/.codex/hooks.json` when it finds Codex installed, and does nothing at all when it doesn't. ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
+
+  **One setup step:** Codex won't run newly registered hooks until you trust them, so a fresh install is silent until you do. Run `codex` in a terminal once and pick **Trust all and continue** — full steps under [Codex](#codex).
 
 ## What's new — 3.7.1
 
-![The status-bar control panel, now with the Auto-mute when focused toggle](media/popup-screen.png)
 
 - **Project-labelled notifications.** Each notification is now titled with the workspace name, so with several projects open you can tell at a glance which one just finished.
 - **Auto-mute when focused.** Opt-in setting that mutes the completion sound and popups while the VS Code window running the task is focused — you can already see it working, so the ping is redundant. Scoped per-window, so a task finishing in a background window still notifies. Toggle it right from the panel above (details under [Auto-mute when focused](#auto-mute-when-focused)).
@@ -22,6 +27,8 @@ Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Cl
 - **Remote audio.** When Claude runs on a remote host (SSH, WSL, dev container), notification sounds now play on your **local** machine instead of the headless remote — see [Remote hosts](#remote-hosts-ssh-wsl-dev-containers).
 - **Per-session disable.** Set `CLAUDE_NOTIFIER_DISABLE` to silence the notifier for a single shell/session — handy on shared SSH hosts (see [below](#disable-per-session-claude_notifier_disable)).
 - **Status-bar control panel.** Hover the **Claude** entry in the status bar for volume, per-event sound preview/swap, and the minimum-task-duration threshold.
+
+![The status-bar control panel, now with the Auto-mute when focused toggle](media/popup-screen.png)
 
 ## Install
 
@@ -53,6 +60,67 @@ curl -fsSL https://raw.githubusercontent.com/ashmitb95/claude-notifier/main/unin
 ```
 
 **Windows:** install the VSCode extension. It auto-configures the PowerShell hooks; no separate CLI installer is needed.
+
+## Codex
+
+Codex sessions run through the same pipeline as Claude Code — same sounds, same per-event levels, same mute, auto-mute, and threshold settings. The extension registers its hooks in `~/.codex/hooks.json` when it finds Codex installed; if you don't have Codex, no `~/.codex` directory is created. Opt out any time with `claudeNotifier.codex.enabled`.
+
+### Turning on notifications for Codex
+
+**Codex will not run a newly registered hook until you trust it**, so there is one manual step after installing the extension. That gate is deliberate on Codex's part, and the extension doesn't grant the trust for you.
+
+1. Install or reload the extension. It writes four hook registrations to `~/.codex/hooks.json` — `Stop`, `PermissionRequest`, `UserPromptSubmit`, and `SubagentStop`.
+2. Run `codex` in a terminal. At startup it shows **Hooks need review** — _"4 hooks are new or changed."_
+3. Choose **Review hooks** to read each entry first, or go straight to **Trust all and continue**.
+4. Carry on. Notifications fire from that point on.
+
+> **`zsh: command not found: codex`?** If you got Codex as the ChatGPT VS Code extension, the CLI is bundled inside it and isn't on your `PATH`. Add it for the current shell, then run `codex`:
+>
+> ```sh
+> export PATH="$(dirname "$(ls -d ~/.vscode/extensions/openai.chatgpt-*/bin/*/codex | head -1)")":$PATH
+> ```
+>
+> Installing the standalone CLI (`npm i -g @openai/codex`) works too. You only need it for this one-time approval — after that, Codex inside VS Code picks up the trust and you never need the terminal again.
+
+You only do this once, and only in the terminal — trust is recorded in `~/.codex/config.toml` and applies to every project and to the Codex VS Code extension too. Codex pins it to a hash of the *registration entry* rather than the hook script's contents, so extension upgrades that rewrite the scripts don't re-trigger the prompt. Revisit the list any time with `/hooks`, or under `Tools & setup` → `Hooks`.
+
+Picking **Continue without trusting** leaves the hooks registered but inert: Codex stays silent until you trust them.
+
+The one gap is the "asks a question" sound — Codex has no `AskUserQuestion` equivalent, so that event only fires for Claude Code.
+
+### Troubleshooting: no Codex notifications
+
+Untrusted hooks are the usual cause, and they're easy to miss: Codex registers them, reports no error, and simply never runs them. Ask Codex's app server what it makes of the registration:
+
+```bash
+{ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"probe","version":"1"}}}'
+  sleep 1
+  printf '%s\n' '{"jsonrpc":"2.0","method":"initialized","params":{}}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"hooks/list","params":{"cwds":["/path/to/your/project"]}}'
+  sleep 3; } | codex app-server
+```
+
+Each entry reports a `trustStatus`:
+
+| Status | Meaning |
+| --- | --- |
+| `trusted` | Good — the hook runs. |
+| `untrusted` | Registered but never invoked. Run `codex` and trust the hooks, as above. |
+| `modified` | The registration changed since you approved it. Re-approve under `/hooks`. |
+
+Or read `~/.codex/config.toml` directly — a trusted hook has a `trusted_hash` entry:
+
+```toml
+[hooks.state."/Users/you/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:…"
+```
+
+If that all looks right and Codex is still silent:
+
+- **No `~/.codex/hooks.json` at all.** The extension only writes it when `~/.codex` already exists, so it skips users who don't have Codex. Run Codex once, then reload VS Code. Check that `claudeNotifier.codex.enabled` is on, and look for the registration line in `View → Output → Claude Notifier`.
+- **Sounds work in Codex but not from a plain terminal session,** or vice versa. That's the notifier's own routing, not Codex — the extension handles playback for any directory an open VS Code window owns, and the hook plays the sound itself otherwise.
+
+Full detail in **[docs/CODEX.md](docs/CODEX.md)**.
 
 ## Remote hosts (SSH, WSL, dev containers)
 
@@ -161,3 +229,7 @@ Thanks to everyone who has contributed to this project:
 ## License
 
 [GPL-3.0](LICENSE.md)
+
+---
+
+An independent, community-built extension. Not affiliated with, endorsed by, or sponsored by Anthropic or OpenAI. "Claude" is a trademark of Anthropic; "Codex" is a trademark of OpenAI.

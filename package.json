@@ -1,8 +1,8 @@
 {
   "name": "claude-notifier",
   "displayName": "Claude Notifier",
-  "description": "Plays distinct sounds when Claude Code finishes a task or needs your input",
-  "version": "3.7.1",
+  "description": "Plays distinct sounds when Claude Code or Codex finishes a task or needs your input",
+  "version": "4.0.0",
   "icon": "media/icon.png",
   "publisher": "SingularityInc",
   "repository": {
@@ -280,6 +280,11 @@
           "deprecationMessage": "Deprecated and ignored. Per-session stage dedup replaces it. Safe to delete from your settings.",
           "description": "Deprecated and ignored. Per-session stage dedup handles rapid 'done' signal coalescing."
         },
+        "claudeNotifier.codex.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Also notify for [Codex](https://developers.openai.com/codex) sessions by registering hooks in `~/.codex/hooks.json`. Has no effect when Codex isn't installed — no `~/.codex` directory is created. Codex asks you to trust the hooks once before they run; see [docs/CODEX.md](https://github.com/ashmitb95/claude-notifier/blob/main/docs/CODEX.md)."
+        },
         "claudeNotifier.remoteAudio.enabled": {
           "type": "boolean",
           "default": false,
@@ -324,5 +329,17 @@
     "typescript": "^5.3.0",
     "typescript-eslint": "^8.60.1",
     "vitest": "^4.1.6"
-  }
+  },
+  "keywords": [
+    "claude",
+    "claude code",
+    "codex",
+    "openai",
+    "anthropic",
+    "notification",
+    "sound",
+    "alert",
+    "agent",
+    "ai"
+  ]
 }
