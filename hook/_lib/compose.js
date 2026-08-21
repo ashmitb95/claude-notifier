@@ -46,4 +46,20 @@ function compose({ workspace, event, chatTitle, detail = [], fallback = "" } = {
   return { title, body: parts.join("\n") };
 }
 
-module.exports = { compose, EVENTS, DEFAULT_TITLE };
+/**
+ * compose(), guarded. The resolvers read the filesystem and parse whatever
+ * Claude Code happened to write, so an unforeseen throw is possible. Losing
+ * the notification entirely would be worse than losing the detail, so any
+ * failure degrades to the pre-rework banner: bare workspace title, plain
+ * sentence. `build` returns { chatTitle, detail } and may throw freely.
+ */
+function safeCompose(workspace, event, fallback, build) {
+  try {
+    const { chatTitle, detail } = build() || {};
+    return compose({ workspace, event, chatTitle, detail, fallback });
+  } catch {
+    return { title: workspace || DEFAULT_TITLE, body: fallback };
+  }
+}
+
+module.exports = { compose, safeCompose, EVENTS, DEFAULT_TITLE };

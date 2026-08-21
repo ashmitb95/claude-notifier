@@ -33,9 +33,10 @@ if ($level -eq 'sound+popup' -or $level -eq 'sound') {
 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'popup') {
-    $chatTitle = Get-NotifierChatTitle $data.transcript_path $data.session_id $cwd
-    $body = Get-NotifierBody -ChatTitle $chatTitle -Detail @() -Fallback 'Claude subagent finished.'
-    Show-NotifierNotification -Message $body -Title (Get-NotifierEventTitle $cwd $LibEvents.Subagent)
+    $n = Get-NotifierComposed $cwd $LibEvents.Subagent 'Claude subagent finished.' {
+        @{ ChatTitle = (Get-NotifierChatTitle $data.transcript_path $data.session_id $cwd); Detail = @() }
+    }
+    Show-NotifierNotification -Message $n.Body -Title $n.Title
 }
 
 exit 0

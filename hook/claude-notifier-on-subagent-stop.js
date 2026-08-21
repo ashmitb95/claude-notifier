@@ -14,7 +14,7 @@ const { writeSignal } = require("./_lib/signal");
 const { shouldSuppressForThreshold } = require("./_lib/task-timer");
 const { agentLabel, agentId } = require("./_lib/agent");
 const { sessionTitle } = require("./_lib/session-label");
-const { compose, EVENTS } = require("./_lib/compose");
+const { safeCompose, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -66,18 +66,20 @@ process.stdin.on("end", () => {
   }
 
   if (level === "sound+popup" || level === "popup") {
-    const { title, body } = compose({
-      workspace: titleForCwd(cwd),
-      event: EVENTS.SUBAGENT,
-      chatTitle: sessionTitle({
-        transcriptPath: input.transcript_path,
-        sessionId: input.session_id,
-        cwd,
-        agent: agentId(),
-      }),
-      detail: [],
-      fallback: `${agentLabel()} subagent finished.`,
-    });
+    const { title, body } = safeCompose(
+      titleForCwd(cwd),
+      EVENTS.SUBAGENT,
+      `${agentLabel()} subagent finished.`,
+      () => ({
+        chatTitle: sessionTitle({
+          transcriptPath: input.transcript_path,
+          sessionId: input.session_id,
+          cwd,
+          agent: agentId(),
+        }),
+        detail: [],
+      })
+    );
     showNotification(body, { title });
   }
 

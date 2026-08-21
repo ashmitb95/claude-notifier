@@ -59,3 +59,47 @@ describe("hook/_lib/compose", () => {
     expect(body).toBe("• Some chat •\n\nClaude has finished the task.");
   });
 });
+
+describe("hook/_lib/compose — safeCompose", () => {
+  it("composes normally when the builder succeeds", async () => {
+    const { safeCompose, compose, EVENTS } = await import("../../hook/_lib/compose");
+    const got = safeCompose("ws", EVENTS.DONE, "Claude has finished the task.", () => ({
+      chatTitle: "Some chat",
+      detail: ["ran 1 command"],
+    }));
+    expect(got).toEqual(
+      compose({
+        workspace: "ws",
+        event: EVENTS.DONE,
+        chatTitle: "Some chat",
+        detail: ["ran 1 command"],
+        fallback: "Claude has finished the task.",
+      })
+    );
+  });
+
+  it("degrades to the pre-rework notification when a resolver throws", async () => {
+    const { safeCompose, EVENTS } = await import("../../hook/_lib/compose");
+    expect(
+      safeCompose("ws", EVENTS.DONE, "Claude has finished the task.", () => {
+        throw new Error("transcript blew up");
+      })
+    ).toEqual({ title: "ws", body: "Claude has finished the task." });
+  });
+
+  it("uses the default title when the workspace is unknown too", async () => {
+    const { safeCompose, EVENTS } = await import("../../hook/_lib/compose");
+    expect(
+      safeCompose("", EVENTS.DONE, "Claude has finished the task.", () => {
+        throw new Error("boom");
+      })
+    ).toEqual({ title: "Claude Notifier", body: "Claude has finished the task." });
+  });
+
+  it("tolerates a builder that returns nothing", async () => {
+    const { safeCompose, EVENTS } = await import("../../hook/_lib/compose");
+    expect(
+      safeCompose("ws", EVENTS.DONE, "Claude has finished the task.", () => undefined)
+    ).toEqual({ title: "ws | ✅ finished", body: "Claude has finished the task." });
+  });
+});

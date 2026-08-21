@@ -244,6 +244,23 @@ function Get-NotifierBody([string]$ChatTitle, [string[]]$Detail, [string]$Fallba
     return ($lines -join "`n")
 }
 
+# Get-NotifierBody, guarded. Mirrors safeCompose() in hook/_lib/compose.js:
+# any failure resolving the chat title or detail degrades to the pre-rework
+# banner rather than losing the notification. Returns a hashtable so the caller
+# gets both halves; on failure Title is the bare workspace name.
+function Get-NotifierComposed([string]$Cwd, [string]$Event, [string]$Fallback, [scriptblock]$Build) {
+    $ws = Get-NotifierTitle $Cwd
+    try {
+        $parts = & $Build
+        $body = Get-NotifierBody -ChatTitle $parts.ChatTitle -Detail $parts.Detail -Fallback $Fallback
+        if (-not $body) { throw 'empty body' }
+        return @{ Title = (Get-NotifierEventTitle $Cwd $Event); Body = $body }
+    } catch {
+        if (-not $ws) { $ws = 'Claude Notifier' }
+        return @{ Title = $ws; Body = $Fallback }
+    }
+}
+
 # Show a Windows balloon notification. Pass -Title (see Get-NotifierTitle) to
 # label it with the project; defaults to "Claude Notifier".
 function Show-NotifierNotification([string]$Message, [string]$Title = 'Claude Notifier') {
