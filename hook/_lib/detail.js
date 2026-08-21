@@ -7,11 +7,7 @@ const COMMAND_MAX = 60;
 
 /** Strip markdown without mangling issue references like #94. */
 function plain(text) {
-  return String(text)
-    .replace(/[*`]/g, "")
-    .replace(/^#+\s/gm, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return String(text).replace(/[*`]/g, "").replace(/^#+\s/gm, "").replace(/\s+/g, " ").trim();
 }
 
 /**
