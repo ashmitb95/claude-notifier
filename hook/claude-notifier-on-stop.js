@@ -13,7 +13,11 @@ const { writeSignal } = require("./_lib/signal");
 const { getAncestorPids } = require("./_lib/pid");
 const { buildClickAction, GENERIC_ACTIVATE } = require("./_lib/click");
 const { shouldSuppressForThreshold } = require("./_lib/task-timer");
-const { agentLabel } = require("./_lib/agent");
+const { agentLabel, agentId } = require("./_lib/agent");
+const { sessionTitle } = require("./_lib/session-label");
+const { doneDetail } = require("./_lib/detail");
+const { activitySummary } = require("./_lib/activity");
+const { compose, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -67,8 +71,23 @@ process.stdin.on("end", () => {
   if (level === "sound+popup" || level === "popup") {
     // Stop notifications fire when the user is likely away — prefer
     // terminal-notifier so the click can focus VS Code.
-    showNotification(`${agentLabel()} has finished the task.`, {
-      title: titleForCwd(cwd),
+    const chatTitle = sessionTitle({
+      transcriptPath: input.transcript_path,
+      sessionId: input.session_id,
+      cwd,
+      agent: agentId(),
+    });
+    const prose = doneDetail(input.last_assistant_message);
+    const detail = prose ? [prose] : activitySummary(input.transcript_path);
+    const { title, body } = compose({
+      workspace: titleForCwd(cwd),
+      event: EVENTS.DONE,
+      chatTitle,
+      detail,
+      fallback: `${agentLabel()} has finished the task.`,
+    });
+    showNotification(body, {
+      title,
       preferTerminalNotifier: true,
       executeCmd: buildClickAction(cwd) || GENERIC_ACTIVATE,
     });
