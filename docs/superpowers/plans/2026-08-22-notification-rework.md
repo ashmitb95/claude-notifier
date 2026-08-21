@@ -56,7 +56,7 @@ Read these measured facts. They were established empirically and the plan depend
 
 PR #89 (branch `pr89`, already fetched) has a working version. Port it, then make the two changes below. Its 512KB head-read is verified safe and should be kept.
 
-- [ ] **Step 0: Add `PROJECTS_DIR` to the hook paths module**
+- [x] **Step 0: Add `PROJECTS_DIR` to the hook paths module**
 
 `hook/_lib/paths.js` does not export it yet, and the resolver needs it. Add beside the existing constants (the file already requires `path`):
 
@@ -70,7 +70,7 @@ const PROJECTS_DIR = path.join(
 
 and add `PROJECTS_DIR` to its `module.exports`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -119,12 +119,12 @@ describe("hook/_lib/session-label — sessionTitle", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/hook/lib.session-label.test.ts`
 Expected: FAIL — `Cannot find module '../../hook/_lib/session-label'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```js
 const fs = require("fs");
@@ -236,12 +236,12 @@ function sessionTitle({ transcriptPath, sessionId, cwd, projectsDir, agent } = {
 module.exports = { sessionTitle, findTranscript };
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run test/hook/lib.session-label.test.ts`
 Expected: PASS, 5 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add hook/_lib/session-label.js test/hook/lib.session-label.test.ts
@@ -258,7 +258,7 @@ git commit -m "feat(hooks): resolve the chat title from the session transcript"
 
 All three read fields already present on hook stdin. No file I/O.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -322,12 +322,12 @@ describe("hook/_lib/detail", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/hook/lib.detail.test.ts`
 Expected: FAIL — `Cannot find module '../../hook/_lib/detail'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```js
 // Detail line(s) for the notification body, extracted from hook stdin.
@@ -403,12 +403,12 @@ function questionDetail(input) {
 module.exports = { doneDetail, permissionDetail, questionDetail };
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run test/hook/lib.detail.test.ts`
 Expected: PASS, 8 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add hook/_lib/detail.js test/hook/lib.detail.test.ts
@@ -427,7 +427,7 @@ The fallback when `doneDetail` returns "". This is the only piece needing a seco
 
 ⚠️ **`isSidechain` is unverified.** No local transcript has ever run a subagent, so the assumption that subagent tool calls land in the same file with `isSidechain: true` is untested. Implement it, but if the field never appears the sidechain line is simply never emitted — which is a safe failure.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -494,12 +494,12 @@ describe("hook/_lib/activity — activitySummary", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/hook/lib.activity.test.ts`
 Expected: FAIL — `Cannot find module '../../hook/_lib/activity'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```js
 const fs = require("fs");
@@ -610,12 +610,12 @@ function activitySummary(transcriptPath) {
 module.exports = { activitySummary };
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run test/hook/lib.activity.test.ts`
 Expected: PASS, 5 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add hook/_lib/activity.js test/hook/lib.activity.test.ts
@@ -632,7 +632,7 @@ git commit -m "feat(hooks): summarise a turn's tool activity from the transcript
 
 The seam. Everything above feeds this; everything below consumes it.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -698,12 +698,12 @@ describe("hook/_lib/compose", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/hook/lib.compose.test.ts`
 Expected: FAIL — `Cannot find module '../../hook/_lib/compose'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```js
 const DEFAULT_TITLE = "Claude Notifier";
@@ -757,12 +757,12 @@ function compose({ workspace, event, chatTitle, detail = [], fallback = "" } = {
 module.exports = { compose, EVENTS, DEFAULT_TITLE };
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run test/hook/lib.compose.test.ts`
 Expected: PASS, 7 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add hook/_lib/compose.js test/hook/lib.compose.test.ts
@@ -779,7 +779,7 @@ git commit -m "feat(hooks): compose notification title and body within the line 
 
 Do this one hook first and confirm the shape before repeating it. The `opts.title` plumbing already exists from #87.
 
-- [ ] **Step 1: Replace the notification call**
+- [x] **Step 1: Replace the notification call**
 
 Current:
 
@@ -826,12 +826,12 @@ const { compose, EVENTS } = require("./_lib/compose");
 const { agentId } = require("./_lib/agent");
 ```
 
-- [ ] **Step 2: Run the existing hook tests**
+- [x] **Step 2: Run the existing hook tests**
 
 Run: `npx vitest run test/hook/on-stop.test.ts`
 Expected: PASS — these assert signal writing, not notification text, so they should be unaffected. If any fail, the failure is real; fix it before continuing.
 
-- [ ] **Step 3: Fire a real banner**
+- [x] **Step 3: Fire a real banner**
 
 ```bash
 echo '{"session_id":"'"$(basename ~/.claude/projects/*/*.jsonl .jsonl | head -1)"'","cwd":"'"$PWD"'","last_assistant_message":"Shipped 3.7.1 and filed two follow-up issues."}' \
@@ -847,7 +847,7 @@ Expected banner:
 Shipped 3.7.1 and filed two follow-up issues.
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add hook/claude-notifier-on-stop.js
@@ -868,7 +868,7 @@ Same shape as Task 5, with the event and detail source swapped per hook.
 
 ⚠️ `claude-notifier-on-notification.js` is in the repo but is **not deployed or registered** — `"Notification"` appears in `src/hooks/registry.ts` only under `ALL_HOOK_TYPES` ("used for cleanup") and in `teardownHooks`. Wire it for consistency, but it will never fire. Do not debug that.
 
-- [ ] **Step 1: Permission hook**
+- [x] **Step 1: Permission hook**
 
 ```js
 const { title, body } = compose({
@@ -890,18 +890,18 @@ showNotification(body, {
 });
 ```
 
-- [ ] **Step 2: Question hook** — identical, with `EVENTS.QUESTION`, `questionDetail(input)`, and fallback `` `${agentLabel()} is asking you a question.` ``
+- [x] **Step 2: Question hook** — identical, with `EVENTS.QUESTION`, `questionDetail(input)`, and fallback `` `${agentLabel()} is asking you a question.` ``
 
-- [ ] **Step 3: Subagent hook** — `EVENTS.SUBAGENT`, `detail: []`, fallback `` `${agentLabel()} subagent finished.` ``
+- [x] **Step 3: Subagent hook** — `EVENTS.SUBAGENT`, `detail: []`, fallback `` `${agentLabel()} subagent finished.` ``
 
-- [ ] **Step 4: Notification hook** — `EVENTS.PERMISSION`, `detail: []`, fallback `input.message || "Claude needs your permission."`
+- [x] **Step 4: Notification hook** — `EVENTS.PERMISSION`, `detail: []`, fallback `input.message || "Claude needs your permission."`
 
-- [ ] **Step 5: Run the hook suite**
+- [x] **Step 5: Run the hook suite**
 
 Run: `npm run test:hook`
 Expected: PASS, all existing tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add hook/claude-notifier-on-*.js
@@ -922,7 +922,7 @@ Port `session-label.js` and `compose.js` to TypeScript, keeping behaviour identi
 
 **The extension has no `last_assistant_message`** — that field is on hook stdin only. So its detail comes from `activitySummary` alone. Port that too, or export it from a shared location if you prefer; the plan assumes a port.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -941,12 +941,12 @@ describe("notifications/compose", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/unit/notifications.compose.test.ts`
 Expected: FAIL — module not found
 
-- [ ] **Step 3: Port both modules to TypeScript**
+- [x] **Step 3: Port both modules to TypeScript**
 
 `src/notifications/compose.ts` is a direct translation of `hook/_lib/compose.js` with types added:
 
@@ -1009,16 +1009,16 @@ export const PROJECTS_DIR = path.join(CLAUDE_DIR, "projects");
 
 Also port `activitySummary` from `hook/_lib/activity.js`; the extension has no `last_assistant_message` (that field is hook-stdin only), so the activity summary is its only detail source for the done event.
 
-- [ ] **Step 4: Wire `local.ts`**
+- [x] **Step 4: Wire `local.ts`**
 
 `showLocalNotification` currently computes `const title = getWorkspaceTitle(cwd);` and uses `message` as-is. Change its signature to accept the composed pair, and have `dispatch.ts`'s existing `showLocalNotification(message, cwd)` call site pass composed values. **Do not touch the four `showInformationMessage` calls.**
 
-- [ ] **Step 5: Run the unit suite**
+- [x] **Step 5: Run the unit suite**
 
 Run: `npm run test:unit && npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/ test/unit/notifications.compose.test.ts
@@ -1037,7 +1037,7 @@ git commit -m "feat: compose session-named notifications on the extension side"
 
 Watch the existing variable convention: `on-stop.ps1` and `on-subagent-stop.ps1` define a local `$cwd`; the other three read `$data.cwd`.
 
-- [ ] **Step 1: Add `Get-NotifierBody` to `_lib.ps1`**
+- [x] **Step 1: Add `Get-NotifierBody` to `_lib.ps1`**
 
 ```powershell
 # Mirrors compose() in hook/_lib/compose.js. Keep the two in sync.
@@ -1058,9 +1058,9 @@ function Get-NotifierBody([string]$ChatTitle, [string[]]$Detail, [string]$Fallba
 }
 ```
 
-- [ ] **Step 2: Update each `.ps1` call site** to pass `-Title "$ws | $emoji $event"` and the composed body. PowerShell single-quote escaping is already handled by the existing doubling helper — do not add another layer.
+- [x] **Step 2: Update each `.ps1` call site** to pass `-Title "$ws | $emoji $event"` and the composed body. PowerShell single-quote escaping is already handled by the existing doubling helper — do not add another layer.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add hook/_lib.ps1 hook/claude-notifier-on-*.ps1
@@ -1073,17 +1073,17 @@ git commit -m "feat(hooks): mirror composed notifications in the PowerShell hook
 
 **Files:** none — this task only runs things.
 
-- [ ] **Step 1: Full suite**
+- [x] **Step 1: Full suite**
 
 Run: `npm test && npm run typecheck && npm run lint && npm run format:check`
 Expected: all green
 
-- [ ] **Step 2: Smoke**
+- [x] **Step 2: Smoke**
 
 Run: `npm run smoke`
 Expected: green (macOS only)
 
-- [ ] **Step 3: Check test fixtures for the `path.sep` trap**
+- [x] **Step 3: Check test fixtures for the `path.sep` trap**
 
 ```bash
 grep -rn '"/Users/\|"/proj\|"/x"' test/unit test/hook | grep -v path.join
@@ -1091,7 +1091,7 @@ grep -rn '"/Users/\|"/proj\|"/x"' test/unit test/hook | grep -v path.join
 
 Expected: no hits in any test that exercises `cwdMatchesFolder`. Hardcoded forward slashes pass on macOS and fail on Windows — this is what broke `main` in `acca8b5`.
 
-- [ ] **Step 4: Fire all four events and confirm against the budget**
+- [x] **Step 4: Fire all four events and confirm against the budget**
 
 ```bash
 node -e '
@@ -1113,7 +1113,7 @@ for (const [event, detail] of cases) {
 
 Expected, for each banner: the title renders whole, the chat line sits in `• •` above a blank line, the detail occupies its allocated lines, and nothing clips mid-word.
 
-- [ ] **Step 5: Commit anything outstanding and open the PR**
+- [x] **Step 5: Commit anything outstanding and open the PR**
 
 ```bash
 git push -u origin feat/notification-rework
