@@ -9,6 +9,10 @@ const { titleForCwd } = require("./_lib/title");
 const { writeSignal } = require("./_lib/signal");
 const { buildClickAction, GENERIC_ACTIVATE } = require("./_lib/click");
 const { shouldSuppressForThreshold } = require("./_lib/task-timer");
+const { agentLabel, agentId } = require("./_lib/agent");
+const { sessionTitle } = require("./_lib/session-label");
+const { questionDetail } = require("./_lib/detail");
+const { compose, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -63,8 +67,20 @@ process.stdin.on("end", () => {
 
   if (level === "sound+popup" || level === "popup") {
     const cwd = (input && input.cwd) || process.cwd() || "";
-    showNotification("Claude is asking you a question.", {
-      title: titleForCwd(cwd),
+    const { title, body } = compose({
+      workspace: titleForCwd(cwd),
+      event: EVENTS.QUESTION,
+      chatTitle: sessionTitle({
+        transcriptPath: input.transcript_path,
+        sessionId: input.session_id,
+        cwd,
+        agent: agentId(),
+      }),
+      detail: [questionDetail(input)].filter(Boolean),
+      fallback: `${agentLabel()} is asking you a question.`,
+    });
+    showNotification(body, {
+      title,
       preferTerminalNotifier: true,
       executeCmd: buildClickAction(cwd) || GENERIC_ACTIVATE,
     });

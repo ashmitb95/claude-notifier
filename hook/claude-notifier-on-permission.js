@@ -9,7 +9,10 @@ const { titleForCwd } = require("./_lib/title");
 const { writeSignal } = require("./_lib/signal");
 const { buildClickAction, GENERIC_ACTIVATE } = require("./_lib/click");
 const { shouldSuppressForThreshold } = require("./_lib/task-timer");
-const { agentLabel } = require("./_lib/agent");
+const { agentLabel, agentId } = require("./_lib/agent");
+const { sessionTitle } = require("./_lib/session-label");
+const { permissionDetail } = require("./_lib/detail");
+const { compose, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -69,8 +72,20 @@ process.stdin.on("end", () => {
   if (level === "sound+popup" || level === "popup") {
     const tool = input.tool_name || "a tool";
     const cwd = (input && input.cwd) || process.cwd() || "";
-    showNotification(`${agentLabel()} needs permission to use ${tool}.`, {
-      title: titleForCwd(cwd),
+    const { title, body } = compose({
+      workspace: titleForCwd(cwd),
+      event: EVENTS.PERMISSION,
+      chatTitle: sessionTitle({
+        transcriptPath: input.transcript_path,
+        sessionId: input.session_id,
+        cwd,
+        agent: agentId(),
+      }),
+      detail: [permissionDetail(input)].filter(Boolean),
+      fallback: `${agentLabel()} needs permission to use ${tool}.`,
+    });
+    showNotification(body, {
+      title,
       preferTerminalNotifier: true,
       executeCmd: buildClickAction(cwd) || GENERIC_ACTIVATE,
     });
