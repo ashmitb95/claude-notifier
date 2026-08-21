@@ -17,6 +17,9 @@ import {
 } from "../settings/sync";
 import { playLocalSound } from "../notifications/sound";
 import { showLocalNotification } from "../notifications/local";
+import { compose, EVENTS } from "../notifications/compose";
+import { sessionTitle, activitySummary, findTranscript } from "./session-label";
+import { getWorkspaceTitle } from "../notifications/title";
 import { playRemoteSound, pushRemoteAudio } from "../notifications/remote";
 import { shouldSuppressForThreshold } from "./task-timer";
 
@@ -204,7 +207,16 @@ function showNotification(reason: string, cwd: string): void {
           }
         });
       if (!isRemote) {
-        showLocalNotification("Claude has finished the task.", cwd);
+        const sid = lastSignalSessionId ?? undefined;
+        const transcriptPath = findTranscript(sid, cwd);
+        const { title, body } = compose({
+          workspace: getWorkspaceTitle(cwd),
+          event: EVENTS.DONE,
+          chatTitle: sessionTitle({ transcriptPath, sessionId: sid, cwd }),
+          detail: activitySummary(transcriptPath),
+          fallback: "Claude has finished the task.",
+        });
+        showLocalNotification(title, body, cwd);
       }
     }
   } else if (reason === "subagent_done") {
