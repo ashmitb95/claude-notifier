@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.5.0] - 2026-08-22
+
+### Added
+
+- **Notifications now say which session fired them and what it did.** 3.7.0 titled each banner with the workspace name, which told you *where* a task finished but not *which* of several sessions in that project, and the body was a fixed sentence that said nothing at all. Every notification is now composed from three independent resolvers. The title pairs the workspace with a short event label — `claude-notifier | ✅ finished`, `❗ needs permission`, `❓ question`, `✅ subagent finished` — so the event reads at a glance without opening anything. The body leads with the chat's own title between bullets (`• Review two new contributor PRs •`), taken from the session transcript: a manual rename (`custom-title`) wins over Claude's generated one (`ai-title`), falling back to the first real user message for a session too young to have been titled. Below that sits a per-event detail line: the closing sentence for a finished task, the command for a permission request, the question — or, for several, a numbered list of their headers. When a task's closing message is too long to fit whole, the detail falls back to a summary of the turn's tool activity (`edited 2 files · ran 5 commands`), with subagent work reported on its own line. ([#93](https://github.com/ashmitb95/claude-notifier/issues/93), [#94](https://github.com/ashmitb95/claude-notifier/issues/94))
+
+  The macOS banner gives roughly 40 characters per line and exactly four body lines, so the composer allocates rather than fixing a cap per element: the detail block takes the lines it needs and the chat title claims whatever is left, meaning a notification with nothing to report gets a longer title instead of wasted space. Every layer fails soft to the one below — a missing transcript costs the chat line, an unreadable one costs the detail, and an unexpected error anywhere in resolution degrades the whole banner to the pre-4.5 shape (bare workspace title, plain sentence) rather than dropping the notification. Codex sessions carry no title in any form, so they short-circuit to the workspace-only title 4.0.0 already shipped. The in-editor toast is unchanged — it is single-line and was deliberately left alone.
+
+  Builds on the workspace-title plumbing contributed by [@marco-lavagnino](https://github.com/marco-lavagnino) in [#87](https://github.com/ashmitb95/claude-notifier/pull/87), and on the transcript-reading approach [@George-Lovric](https://github.com/George-Lovric) prototyped in [#89](https://github.com/ashmitb95/claude-notifier/pull/89).
+
 ## [4.0.0] - 2026-08-19
 
 ### Added

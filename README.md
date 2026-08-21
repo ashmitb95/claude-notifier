@@ -9,6 +9,19 @@ Stop watching the screen — go grab a coffee and let your agent ping you when i
 
 Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Claude Code or Codex — on **macOS**, **Windows**, **WSL**, and **Linux**, including **remote hosts over SSH**.
 
+## What's new — 4.5.0
+
+- **Notifications tell you which chat, and what happened.** The title now pairs the project with the event (`claude-notifier | ✅ finished`), and the body leads with the chat's own name — so with several sessions running you can tell them apart without switching windows.
+
+  ```
+  claude-notifier | ✅ finished
+  • Review two new contributor PRs •
+
+  edited 2 files · ran 5 commands
+  ```
+
+  Underneath sits what actually happened: the closing sentence for a finished task, the command for a permission request, or the question being asked. When there's nothing to report the banner just gets shorter — nothing is padded. ([#93](https://github.com/ashmitb95/claude-notifier/issues/93), [#94](https://github.com/ashmitb95/claude-notifier/issues/94))
+
 ## What's new — 4.0.0
 
 - **Codex support.** [Codex](https://developers.openai.com/codex) sessions now drive the same notifications as Claude Code — same sounds, same per-event levels, same mute and auto-mute behaviour. The extension registers hooks in `~/.codex/hooks.json` when it finds Codex installed, and does nothing at all when it doesn't. ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
