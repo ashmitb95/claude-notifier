@@ -22,6 +22,8 @@ Works with **VSCode**, **terminal CLI**, **vim**, or any editor where you use Cl
 
   Underneath sits what actually happened: the closing sentence for a finished task, the command for a permission request, or the question being asked. When there's nothing to report the banner just gets shorter — nothing is padded. ([#93](https://github.com/ashmitb95/claude-notifier/issues/93), [#94](https://github.com/ashmitb95/claude-notifier/issues/94))
 
+- **All of it is configurable.** Each event's label is a free-text field — paste any emoji or wording you like, or empty it to show just the project name. Both body parts have their own switch, so you can keep the chat name and drop the detail, or turn the body back into the single line it used to be. See [Notification content](#notification-content). ([#99](https://github.com/ashmitb95/claude-notifier/issues/99))
+
 ## What's new — 4.0.0
 
 - **Codex support.** [Codex](https://developers.openai.com/codex) sessions now drive the same notifications as Claude Code — same sounds, same per-event levels, same mute and auto-mute behaviour. The extension registers hooks in `~/.codex/hooks.json` when it finds Codex installed, and does nothing at all when it doesn't. ([#83](https://github.com/ashmitb95/claude-notifier/issues/83))
@@ -144,6 +146,31 @@ This is **opt-in**; existing local setups are unaffected. See **[docs/REMOTE_HOS
 Open **Settings** → search **"Claude Notifier"** (`Cmd+,` / `Ctrl+,`) to set each event's notification level (`sound+popup` | `sound` | `popup` | `off`) and sound preset.
 
 **Sound presets** — macOS: Basso, Blow, Bottle, Frog, Funk, Glass, Hero, Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink. Windows: Windows Notify, tada, chimes, chord, ding, notify, ringin, Windows Background. On Linux the macOS names map to freedesktop XDG sounds under `/usr/share/sounds/freedesktop/stereo/`.
+
+### Notification content
+
+Each event's title label is free text — paste any emoji or wording:
+
+| Setting | Default |
+| --- | --- |
+| `claudeNotifier.taskCompleted.label` | `✅ finished` |
+| `claudeNotifier.needsPermission.label` | `❗ needs permission` |
+| `claudeNotifier.asksQuestion.label` | `❓ question` |
+| `claudeNotifier.subagentCompleted.label` | `✅ subagent finished` |
+
+The label follows the project name in the title — `my-app | ✅ finished`. **Empty it** to show just the project name, with no separator. Labels are clamped to 24 characters so a stray paste can't run off the banner.
+
+Two switches control the body:
+
+`claudeNotifier.showChatTitle` *(boolean, default `true`)*
+
+The chat's own name, shown between bullets — `• Review two new contributor PRs •`. Resolved from the session transcript, so a chat you renamed wins over the auto-generated name. Turning this off skips reading the transcript entirely.
+
+`claudeNotifier.showDetail` *(boolean, default `true`)*
+
+What actually happened, under the chat name: the closing sentence for a finished task, the command being requested, or the question being asked. Turn it off for a shorter notification.
+
+With both off, the body falls back to the plain one-line sentence used before 4.5.0.
 
 ### Minimum task duration threshold
 
