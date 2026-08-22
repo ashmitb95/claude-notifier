@@ -36,9 +36,9 @@ if ($level -eq 'sound+popup' -or $level -eq 'sound') {
 
 if ($level -eq 'sound+popup' -or $level -eq 'popup') {
     $tool = if ($data.tool_name) { $data.tool_name } else { 'a tool' }
-    $n = Get-NotifierComposed $data.cwd $LibEvents.Permission "Claude needs permission to use $tool." {
-        @{ ChatTitle = (Get-NotifierChatTitle $data.transcript_path $data.session_id $data.cwd)
-           Detail    = @(Get-NotifierPermissionDetail $data | Where-Object { $_ }) }
+    $n = Get-NotifierComposed $data.cwd (Get-NotifierEventLabel $cfg.label $LibEvents.Permission) "Claude needs permission to use $tool." {
+        @{ ChatTitle = $(if (Test-NotifierWantsChatTitle $conf) { Get-NotifierChatTitle $data.transcript_path $data.session_id $data.cwd } else { '' })
+           Detail    = $(if (Test-NotifierWantsDetail $conf) { @(Get-NotifierPermissionDetail $data | Where-Object { $_ }) } else { @() }) }
     }
     Show-NotifierNotification -Message $n.Body -Title $n.Title
 }

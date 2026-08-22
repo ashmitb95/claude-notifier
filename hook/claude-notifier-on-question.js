@@ -12,7 +12,7 @@ const { shouldSuppressForThreshold } = require("./_lib/task-timer");
 const { agentLabel, agentId } = require("./_lib/agent");
 const { sessionTitle } = require("./_lib/session-label");
 const { questionDetail } = require("./_lib/detail");
-const { safeCompose, EVENTS } = require("./_lib/compose");
+const { safeCompose, eventLabel, wantsChatTitle, wantsDetail, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -67,18 +67,23 @@ process.stdin.on("end", () => {
 
   if (level === "sound+popup" || level === "popup") {
     const cwd = (input && input.cwd) || process.cwd() || "";
+    // Resolved lazily so an opt-out skips the transcript read entirely.
+    const chatTitleFor = () =>
+      wantsChatTitle(config)
+        ? sessionTitle({
+            transcriptPath: input.transcript_path,
+            sessionId: input.session_id,
+            cwd,
+            agent: agentId(),
+          })
+        : "";
     const { title, body } = safeCompose(
       titleForCwd(cwd),
-      EVENTS.QUESTION,
+      eventLabel(cfg.label, EVENTS.QUESTION),
       `${agentLabel()} is asking you a question.`,
       () => ({
-        chatTitle: sessionTitle({
-          transcriptPath: input.transcript_path,
-          sessionId: input.session_id,
-          cwd,
-          agent: agentId(),
-        }),
-        detail: [questionDetail(input)].filter(Boolean),
+        chatTitle: chatTitleFor(),
+        detail: wantsDetail(config) ? [questionDetail(input)].filter(Boolean) : [],
       })
     );
     showNotification(body, {

@@ -10,6 +10,7 @@ import { rememberDone, getRememberedDone, revealClaudeTab } from "../routing/foc
 import {
   getEventLevel,
   getEventConfig,
+  getBodyParts,
   getSoundVolume,
   getMinTaskDurationThreshold,
   getRemoteAudio,
@@ -17,7 +18,7 @@ import {
 } from "../settings/sync";
 import { playLocalSound } from "../notifications/sound";
 import { showLocalNotification } from "../notifications/local";
-import { safeCompose, EVENTS } from "../notifications/compose";
+import { safeCompose, eventLabel, EVENTS } from "../notifications/compose";
 import { sessionTitle, activitySummary, findTranscript } from "./session-label";
 import { getWorkspaceTitle } from "../notifications/title";
 import { playRemoteSound, pushRemoteAudio } from "../notifications/remote";
@@ -207,16 +208,20 @@ function showNotification(reason: string, cwd: string): void {
           }
         });
       if (!isRemote) {
+        const parts = getBodyParts();
         const { title, body } = safeCompose(
           getWorkspaceTitle(cwd),
-          EVENTS.DONE,
+          eventLabel(getEventConfig("taskCompleted").label, EVENTS.DONE),
           "Claude has finished the task.",
           () => {
+            if (!parts.chatTitle && !parts.detail) return {};
             const sid = lastSignalSessionId ?? undefined;
             const transcriptPath = findTranscript(sid, cwd);
             return {
-              chatTitle: sessionTitle({ transcriptPath, sessionId: sid, cwd }),
-              detail: activitySummary(transcriptPath),
+              chatTitle: parts.chatTitle
+                ? sessionTitle({ transcriptPath, sessionId: sid, cwd })
+                : "",
+              detail: parts.detail ? activitySummary(transcriptPath) : [],
             };
           }
         );

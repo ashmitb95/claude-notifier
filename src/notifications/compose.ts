@@ -12,6 +12,10 @@ export const EVENTS = {
 } as const;
 
 // Measured on a macOS banner: ~40 chars per line, exactly four body lines.
+// Event labels are user-configurable free text, so they reach the banner
+// unvalidated. Clamped to keep a pasted paragraph from running off the title.
+const LABEL_MAX = 24;
+
 const LINE = 40;
 const BODY_LINES = 4;
 const CHROME = 4; // "• " and " •"
@@ -43,7 +47,7 @@ export function compose({
   detail = [],
   fallback = "",
 }: ComposeInput): { title: string; body: string } {
-  const title = workspace ? `${workspace} | ${event}` : DEFAULT_TITLE;
+  const title = workspace ? (event ? `${workspace} | ${event}` : workspace) : DEFAULT_TITLE;
 
   const detailLines = detail.length ? detail : fallback ? [fallback] : [];
   const spare = Math.max(1, BODY_LINES - detailLines.length - (detailLines.length ? 1 : 0));
@@ -77,4 +81,16 @@ export function safeCompose(
   } catch {
     return { title: workspace || DEFAULT_TITLE, body: fallback };
   }
+}
+
+/**
+ * The event label for a title: the user's configured string when they set one,
+ * otherwise the built-in default from EVENTS. An empty string is a deliberate
+ * opt-out and yields a workspace-only title, so it is distinct from unset.
+ */
+export function eventLabel(configured: string | undefined | null, fallback: string): string {
+  if (configured === undefined || configured === null) return fallback;
+  const flat = String(configured).replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  return flat.length > LABEL_MAX ? flat.slice(0, LABEL_MAX).trim() : flat;
 }

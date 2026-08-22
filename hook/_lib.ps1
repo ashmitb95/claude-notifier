@@ -100,11 +100,33 @@ $LibEvents = @{
 }
 
 # Notification title: "<workspace> | <emoji> <event>". Mirrors compose() in
-# hook/_lib/compose.js.
+# hook/_lib/compose.js. An empty event drops the separator.
 function Get-NotifierEventTitle([string]$Cwd, [string]$Event) {
     $ws = Get-NotifierTitle $Cwd
     if (-not $ws) { return 'Claude Notifier' }
+    if (-not $Event) { return $ws }
     return "$ws | $Event"
+}
+
+# Mirrors eventLabel() in hook/_lib/compose.js. The configured label is free
+# text, so it is collapsed to one line and clamped; '' is a deliberate opt-out
+# and stays distinct from unset.
+function Get-NotifierEventLabel($Configured, [string]$Fallback) {
+    if ($null -eq $Configured) { return $Fallback }
+    $flat = ("$Configured" -replace '\s+', ' ').Trim()
+    if (-not $flat) { return '' }
+    if ($flat.Length -gt 24) { return $flat.Substring(0, 24).Trim() }
+    return $flat
+}
+
+# Mirrors wantsChatTitle()/wantsDetail(). Both default on; only an explicit
+# false turns them off, so a config from an older extension behaves as before.
+function Test-NotifierWantsChatTitle($Config) {
+    return ($null -eq $Config -or $Config.showChatTitle -ne $false)
+}
+
+function Test-NotifierWantsDetail($Config) {
+    return ($null -eq $Config -or $Config.showDetail -ne $false)
 }
 
 # The chat title for a session, or '' when none resolves. Mirrors sessionTitle()

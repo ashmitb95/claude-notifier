@@ -11,7 +11,7 @@ const { titleForCwd } = require("./_lib/title");
 const { writeSignal } = require("./_lib/signal");
 const { agentId } = require("./_lib/agent");
 const { sessionTitle } = require("./_lib/session-label");
-const { safeCompose, EVENTS } = require("./_lib/compose");
+const { safeCompose, eventLabel, wantsChatTitle, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -48,15 +48,17 @@ process.stdin.on("end", () => {
   const cwd = (input && input.cwd) || process.cwd() || "";
   const { title, body } = safeCompose(
     titleForCwd(cwd),
-    EVENTS.PERMISSION,
+    eventLabel(config?.needsPermission?.label, EVENTS.PERMISSION),
     input.message || "Claude needs your permission.",
     () => ({
-      chatTitle: sessionTitle({
-        transcriptPath: input.transcript_path,
-        sessionId: input.session_id,
-        cwd,
-        agent: agentId(),
-      }),
+      chatTitle: wantsChatTitle(config)
+        ? sessionTitle({
+            transcriptPath: input.transcript_path,
+            sessionId: input.session_id,
+            cwd,
+            agent: agentId(),
+          })
+        : "",
       detail: [],
     })
   );

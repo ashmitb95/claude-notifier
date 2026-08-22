@@ -47,6 +47,7 @@ export function syncConfig(): void {
       {
         level: cfg.get<string>(`${hook.eventKey}.level`, LEVELS.SOUND_POPUP),
         sound: cfg.get<string>(`${hook.eventKey}.sound`, hook.defaultSound),
+        label: cfg.get<string>(`${hook.eventKey}.label`, hook.defaultLabel),
       },
     ])
   );
@@ -57,6 +58,8 @@ export function syncConfig(): void {
       cfg.get<number>("minTaskDurationThreshold", DEFAULT_THRESHOLD)
     ),
     suppressSubagentInteractions: cfg.get<boolean>("suppressSubagentInteractions", true),
+    showChatTitle: cfg.get<boolean>("showChatTitle", true),
+    showDetail: cfg.get<boolean>("showDetail", true),
     remoteAudio: {
       enabled: cfg.get<boolean>("remoteAudio.enabled", false),
       port: cfg.get<number>("remoteAudio.port", DEFAULT_REMOTE_AUDIO_PORT),
@@ -68,15 +71,33 @@ export function syncConfig(): void {
   } catch {}
 }
 
-export function getEventConfig(eventKey: string): { level: string; sound: string } {
+export function getEventConfig(eventKey: string): {
+  level: string;
+  sound: string;
+  label: string;
+} {
   try {
     const config = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
     return {
       level: config[eventKey]?.level ?? LEVELS.SOUND_POPUP,
       sound: config[eventKey]?.sound ?? "",
+      label: config[eventKey]?.label ?? "",
     };
   } catch {
-    return { level: LEVELS.SOUND_POPUP, sound: "" };
+    return { level: LEVELS.SOUND_POPUP, sound: "", label: "" };
+  }
+}
+
+/** Notification body parts the user has left enabled. Both default on. */
+export function getBodyParts(): { chatTitle: boolean; detail: boolean } {
+  try {
+    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+    return {
+      chatTitle: config.showChatTitle !== false,
+      detail: config.showDetail !== false,
+    };
+  } catch {
+    return { chatTitle: true, detail: true };
   }
 }
 

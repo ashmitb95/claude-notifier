@@ -35,9 +35,9 @@ if ($level -eq 'sound+popup' -or $level -eq 'sound') {
 }
 
 if ($level -eq 'sound+popup' -or $level -eq 'popup') {
-    $n = Get-NotifierComposed $data.cwd $LibEvents.Question 'Claude is asking you a question.' {
-        @{ ChatTitle = (Get-NotifierChatTitle $data.transcript_path $data.session_id $data.cwd)
-           Detail    = (Get-NotifierQuestionDetail $data) }
+    $n = Get-NotifierComposed $data.cwd (Get-NotifierEventLabel $cfg.label $LibEvents.Question) 'Claude is asking you a question.' {
+        @{ ChatTitle = $(if (Test-NotifierWantsChatTitle $conf) { Get-NotifierChatTitle $data.transcript_path $data.session_id $data.cwd } else { '' })
+           Detail    = $(if (Test-NotifierWantsDetail $conf) { (Get-NotifierQuestionDetail $data) } else { @() }) }
     }
     Show-NotifierNotification -Message $n.Body -Title $n.Title
 }

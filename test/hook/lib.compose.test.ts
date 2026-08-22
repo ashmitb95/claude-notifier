@@ -103,3 +103,72 @@ describe("hook/_lib/compose — safeCompose", () => {
     ).toEqual({ title: "ws | ✅ finished", body: "Claude has finished the task." });
   });
 });
+
+describe("hook/_lib/compose — eventLabel", () => {
+  it("falls back to the built-in default when nothing is configured", async () => {
+    const { eventLabel, EVENTS } = await import("../../hook/_lib/compose");
+    expect(eventLabel(undefined, EVENTS.DONE)).toBe("✅ finished");
+    expect(eventLabel(null, EVENTS.DONE)).toBe("✅ finished");
+  });
+
+  it("uses the configured label verbatim", async () => {
+    const { eventLabel, EVENTS } = await import("../../hook/_lib/compose");
+    expect(eventLabel("🎉 all done", EVENTS.DONE)).toBe("🎉 all done");
+  });
+
+  it("treats an empty label as a deliberate opt-out", async () => {
+    const { eventLabel, EVENTS } = await import("../../hook/_lib/compose");
+    expect(eventLabel("", EVENTS.DONE)).toBe("");
+    expect(eventLabel("   ", EVENTS.DONE)).toBe("");
+  });
+
+  it("collapses whitespace and clamps a pasted paragraph", async () => {
+    const { eventLabel, EVENTS } = await import("../../hook/_lib/compose");
+    expect(eventLabel("done\nwith\ttabs", EVENTS.DONE)).toBe("done with tabs");
+    const long = eventLabel("x".repeat(80), EVENTS.DONE);
+    expect(long.length).toBeLessThanOrEqual(24);
+  });
+
+  it("drops the separator when the label is empty", async () => {
+    const { compose } = await import("../../hook/_lib/compose");
+    expect(compose({ workspace: "my-app", event: "" }).title).toBe("my-app");
+    expect(compose({ workspace: "my-app", event: "✅ finished" }).title).toBe(
+      "my-app | ✅ finished"
+    );
+  });
+});
+
+describe("hook/_lib/compose — visibility flags", () => {
+  it("defaults both parts on when unconfigured", async () => {
+    const { wantsChatTitle, wantsDetail } = await import("../../hook/_lib/compose");
+    expect(wantsChatTitle(undefined)).toBe(true);
+    expect(wantsDetail(undefined)).toBe(true);
+    expect(wantsChatTitle({})).toBe(true);
+    expect(wantsDetail({})).toBe(true);
+  });
+
+  it("honours an explicit opt-out", async () => {
+    const { wantsChatTitle, wantsDetail } = await import("../../hook/_lib/compose");
+    expect(wantsChatTitle({ showChatTitle: false })).toBe(false);
+    expect(wantsDetail({ showDetail: false })).toBe(false);
+  });
+
+  it("keeps the parts independent", async () => {
+    const { wantsChatTitle, wantsDetail } = await import("../../hook/_lib/compose");
+    expect(wantsChatTitle({ showDetail: false })).toBe(true);
+    expect(wantsDetail({ showChatTitle: false })).toBe(true);
+  });
+
+  it("falls back to the plain sentence when both are off", async () => {
+    const { compose, EVENTS } = await import("../../hook/_lib/compose");
+    const { title, body } = compose({
+      workspace: "ws",
+      event: EVENTS.DONE,
+      chatTitle: "",
+      detail: [],
+      fallback: "Claude has finished the task.",
+    });
+    expect(title).toBe("ws | ✅ finished");
+    expect(body).toBe("Claude has finished the task.");
+  });
+});

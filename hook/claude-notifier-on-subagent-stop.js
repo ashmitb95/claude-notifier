@@ -14,7 +14,7 @@ const { writeSignal } = require("./_lib/signal");
 const { shouldSuppressForThreshold } = require("./_lib/task-timer");
 const { agentLabel, agentId } = require("./_lib/agent");
 const { sessionTitle } = require("./_lib/session-label");
-const { safeCompose, EVENTS } = require("./_lib/compose");
+const { safeCompose, eventLabel, wantsChatTitle, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -66,19 +66,21 @@ process.stdin.on("end", () => {
   }
 
   if (level === "sound+popup" || level === "popup") {
+    // Resolved lazily so an opt-out skips the transcript read entirely.
+    const chatTitleFor = () =>
+      wantsChatTitle(config)
+        ? sessionTitle({
+            transcriptPath: input.transcript_path,
+            sessionId: input.session_id,
+            cwd,
+            agent: agentId(),
+          })
+        : "";
     const { title, body } = safeCompose(
       titleForCwd(cwd),
-      EVENTS.SUBAGENT,
+      eventLabel(cfg.label, EVENTS.SUBAGENT),
       `${agentLabel()} subagent finished.`,
-      () => ({
-        chatTitle: sessionTitle({
-          transcriptPath: input.transcript_path,
-          sessionId: input.session_id,
-          cwd,
-          agent: agentId(),
-        }),
-        detail: [],
-      })
+      () => ({ chatTitle: chatTitleFor(), detail: [] })
     );
     showNotification(body, { title });
   }
