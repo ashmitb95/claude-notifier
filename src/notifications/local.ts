@@ -2,16 +2,17 @@ import * as vscode from "vscode";
 import { exec } from "child_process";
 import { IS_WIN, IS_MAC, FOCUS_SIGNAL_FILE } from "../paths";
 import { getTerminalNotifierPath, getCodeCliPath } from "./terminal-notifier";
-import { getWorkspaceTitle } from "./title";
 
 function shellQuote(s: string): string {
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
-export function showLocalNotification(message: string, cwd?: string): void {
-  // Title the notification with the workspace name so notifications from
-  // parallel projects are distinguishable in Notification Center / the tray.
-  const title = getWorkspaceTitle(cwd);
+/**
+ * Show an OS notification. `title` and `message` come pre-composed from
+ * notifications/compose so the extension and the hooks frame banners the
+ * same way.
+ */
+export function showLocalNotification(title: string, message: string, cwd?: string): void {
   if (IS_WIN) {
     const safeMsg = message.replace(/'/g, "''");
     const safeTitle = title.replace(/'/g, "''");

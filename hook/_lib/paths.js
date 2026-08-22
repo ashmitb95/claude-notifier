@@ -7,6 +7,11 @@ const FOCUS_SIGNAL_FILE = path.join(HOOKS_DIR, "claude-notifier-focus");
 const CONFIG_FILE = path.join(HOOKS_DIR, "claude-notifier-config.json");
 const ACTIVE_DIR = path.join(HOOKS_DIR, "claude-notifier-active.d");
 const TASK_START_DIR = path.join(HOOKS_DIR, "claude-notifier-task-start");
+const PROJECTS_DIR = path.join(
+  process.env.HOME || process.env.USERPROFILE || "~",
+  ".claude",
+  "projects"
+);
 
 module.exports = {
   HOOKS_DIR,
@@ -16,4 +21,5 @@ module.exports = {
   CONFIG_FILE,
   ACTIVE_DIR,
   TASK_START_DIR,
+  PROJECTS_DIR,
 };

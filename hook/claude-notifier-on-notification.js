@@ -9,6 +9,9 @@ const { emitSound } = require("./_lib/emit");
 const { showNotification } = require("./_lib/notify");
 const { titleForCwd } = require("./_lib/title");
 const { writeSignal } = require("./_lib/signal");
+const { agentId } = require("./_lib/agent");
+const { sessionTitle } = require("./_lib/session-label");
+const { safeCompose, eventLabel, wantsChatTitle, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -42,9 +45,24 @@ process.stdin.on("end", () => {
     config
   );
 
-  const message = input.message || "Claude needs your permission.";
   const cwd = (input && input.cwd) || process.cwd() || "";
-  showNotification(message, { title: titleForCwd(cwd) });
+  const { title, body } = safeCompose(
+    titleForCwd(cwd),
+    eventLabel(config?.needsPermission?.label, EVENTS.PERMISSION),
+    input.message || "Claude needs your permission.",
+    () => ({
+      chatTitle: wantsChatTitle(config)
+        ? sessionTitle({
+            transcriptPath: input.transcript_path,
+            sessionId: input.session_id,
+            cwd,
+            agent: agentId(),
+          })
+        : "",
+      detail: [],
+    })
+  );
+  showNotification(body, { title });
 
   writeSignal("input", input.session_id);
 

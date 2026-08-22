@@ -12,7 +12,9 @@ const { titleForCwd } = require("./_lib/title");
 const { extensionOwnsCwd } = require("./_lib/active");
 const { writeSignal } = require("./_lib/signal");
 const { shouldSuppressForThreshold } = require("./_lib/task-timer");
-const { agentLabel } = require("./_lib/agent");
+const { agentLabel, agentId } = require("./_lib/agent");
+const { sessionTitle } = require("./_lib/session-label");
+const { safeCompose, eventLabel, wantsChatTitle, EVENTS } = require("./_lib/compose");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -64,7 +66,23 @@ process.stdin.on("end", () => {
   }
 
   if (level === "sound+popup" || level === "popup") {
-    showNotification(`${agentLabel()} subagent finished.`, { title: titleForCwd(cwd) });
+    // Resolved lazily so an opt-out skips the transcript read entirely.
+    const chatTitleFor = () =>
+      wantsChatTitle(config)
+        ? sessionTitle({
+            transcriptPath: input.transcript_path,
+            sessionId: input.session_id,
+            cwd,
+            agent: agentId(),
+          })
+        : "";
+    const { title, body } = safeCompose(
+      titleForCwd(cwd),
+      eventLabel(cfg.label, EVENTS.SUBAGENT),
+      `${agentLabel()} subagent finished.`,
+      () => ({ chatTitle: chatTitleFor(), detail: [] })
+    );
+    showNotification(body, { title });
   }
 
   process.exit(0);

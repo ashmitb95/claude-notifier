@@ -17,6 +17,12 @@ export interface HookDef {
   eventKey: string;
   /** Default sound preset. */
   defaultSound: string;
+  /**
+   * Default event label for the notification title, shown after the project
+   * name (`my-app | ✅ finished`). User-overridable via
+   * claudeNotifier.<eventKey>.label. Empty for hooks that never notify.
+   */
+  defaultLabel: string;
 }
 
 export const HOOKS: HookDef[] = [
@@ -26,6 +32,7 @@ export const HOOKS: HookDef[] = [
     codexType: "Stop",
     eventKey: "taskCompleted",
     defaultSound: "Hero",
+    defaultLabel: "✅ finished",
   },
   {
     baseName: "claude-notifier-on-permission",
@@ -33,6 +40,7 @@ export const HOOKS: HookDef[] = [
     codexType: "PermissionRequest",
     eventKey: "needsPermission",
     defaultSound: "Glass",
+    defaultLabel: "❗ needs permission",
   },
   {
     baseName: "claude-notifier-on-question",
@@ -40,6 +48,7 @@ export const HOOKS: HookDef[] = [
     matcher: "AskUserQuestion",
     eventKey: "asksQuestion",
     defaultSound: "Funk",
+    defaultLabel: "❓ question",
   },
   {
     // Coordination-only hook: tells the extension's stage state machine to
@@ -52,6 +61,7 @@ export const HOOKS: HookDef[] = [
     codexType: "UserPromptSubmit",
     eventKey: "userPromptSubmit",
     defaultSound: "",
+    defaultLabel: "",
   },
   {
     // Fires when a Task subagent finishes. Default level is "off" so it
@@ -62,6 +72,7 @@ export const HOOKS: HookDef[] = [
     codexType: "SubagentStop",
     eventKey: "subagentCompleted",
     defaultSound: "Pop",
+    defaultLabel: "✅ subagent finished",
   },
 ];
 

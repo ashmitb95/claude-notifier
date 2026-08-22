@@ -14,7 +14,12 @@ if (Test-NotifierMuted) { exit 0 }
 Invoke-NotifierSound -Path 'C:\Windows\Media\Windows Notify.wav' -Fallback $LibBundledFallback.needsPermission
 
 $message = if ($data.message) { $data.message } else { 'Claude needs your permission.' }
-Show-NotifierNotification -Message $message -Title (Get-NotifierTitle $data.cwd)
+$conf = Read-NotifierConfig
+$n = Get-NotifierComposed $data.cwd (Get-NotifierEventLabel $conf.needsPermission.label $LibEvents.Permission) $message {
+    @{ ChatTitle = $(if (Test-NotifierWantsChatTitle $conf) { Get-NotifierChatTitle $data.transcript_path $data.session_id $data.cwd } else { '' })
+       Detail    = @() }
+}
+Show-NotifierNotification -Message $n.Body -Title $n.Title
 
 Write-NotifierSignal -Reason 'input' -SessionId $data.session_id
 

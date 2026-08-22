@@ -2,7 +2,7 @@
   "name": "claude-notifier",
   "displayName": "Claude Notifier",
   "description": "Plays distinct sounds when Claude Code or Codex finishes a task or needs your input",
-  "version": "4.0.0",
+  "version": "4.5.0",
   "icon": "media/icon.png",
   "publisher": "SingularityInc",
   "repository": {
@@ -110,6 +110,11 @@
           "default": "Hero",
           "description": "Sound preset when Claude finishes a task. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
+        "claudeNotifier.taskCompleted.label": {
+          "type": "string",
+          "default": "✅ finished",
+          "markdownDescription": "Shown after the project name in the notification title when Claude finishes a task — `my-app | ✅ finished`. Paste any emoji or text. Leave empty to show just the project name."
+        },
         "claudeNotifier.needsPermission.level": {
           "type": "string",
           "enum": [
@@ -155,6 +160,11 @@
           ],
           "default": "Glass",
           "description": "Sound preset when Claude needs permission. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
+        },
+        "claudeNotifier.needsPermission.label": {
+          "type": "string",
+          "default": "❗ needs permission",
+          "markdownDescription": "Shown after the project name in the notification title when Claude needs permission to use a tool — `my-app | ❗ needs permission`. Paste any emoji or text. Leave empty to show just the project name."
         },
         "claudeNotifier.asksQuestion.level": {
           "type": "string",
@@ -202,6 +212,11 @@
           "default": "Funk",
           "description": "Sound preset when Claude asks a question. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
+        "claudeNotifier.asksQuestion.label": {
+          "type": "string",
+          "default": "❓ question",
+          "markdownDescription": "Shown after the project name in the notification title when Claude asks you a question — `my-app | ❓ question`. Paste any emoji or text. Leave empty to show just the project name."
+        },
         "claudeNotifier.subagentCompleted.level": {
           "type": "string",
           "enum": [
@@ -248,6 +263,11 @@
           "default": "Pop",
           "description": "Sound preset when a Task subagent finishes. macOS: Basso–Tink. Windows: Windows Notify–Windows Background."
         },
+        "claudeNotifier.subagentCompleted.label": {
+          "type": "string",
+          "default": "✅ subagent finished",
+          "markdownDescription": "Shown after the project name in the notification title when a Claude subagent finishes — `my-app | ✅ subagent finished`. Paste any emoji or text. Leave empty to show just the project name."
+        },
         "claudeNotifier.soundVolume": {
           "type": "number",
           "default": 1,
@@ -266,6 +286,16 @@
           "type": "boolean",
           "default": true,
           "description": "When true, permission and question hooks fired from inside a Task subagent (detected via the agent_id field in the hook payload) are silenced — no sound, no popup. The main agent's own permission/question prompts still fire normally. Useful in auto-accept mode where subagent prompts are noise."
+        },
+        "claudeNotifier.showChatTitle": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show the chat's own name in the notification body, so sessions in the same project are distinguishable. Resolved from the session transcript; a renamed chat wins over the generated name."
+        },
+        "claudeNotifier.showDetail": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show what actually happened under the chat name — the closing sentence for a finished task, the command for a permission request, or the question being asked. Turn off for a one-line notification."
         },
         "claudeNotifier.autoMuteWhenFocused": {
           "type": "boolean",
