@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **A `Task` subagent finishing could fire a "task finished" notification mid-conversation, whatever `claudeNotifier.subagentCompleted.level` said.** When a subagent hands its report back, Claude Code delivers it to the parent session as a `UserPromptSubmit` — same `session_id`, no `agent_id`, and the report itself as the prompt text. The notifier's prompt hook is what advances a session's dedup stage, so every hand-back looked like the user submitting a new prompt: the stage advanced, the one-notification-per-stage guarantee reset mid-task, and the `Stop` that followed the parent's resumed work announced itself as a finished task. The `subagentCompleted` opt-out never entered into it — as far as the pipeline was concerned this was ordinary main-agent work. A hand-back carries the same `prompt_id` as the turn already in flight, so the prompt hook now records that id on the existing per-session marker and exits on a repeat. ([#103](https://github.com/ashmitb95/claude-notifier/issues/103))
+
+  The same re-entry also rewrote the parent's task-start marker, restarting the `minTaskDurationThreshold` clock: a ten-minute task that dispatched a subagent near the end was timed from the hand-back rather than from the prompt, so it could fall under the threshold and go unannounced. Both follow from the same guard. Hosts that send no `prompt_id` — Codex, older Claude Code — keep the previous unconditional behaviour rather than being silenced by a field they don't populate.
+
 ## [4.0.0] - 2026-08-19
 
 ### Added

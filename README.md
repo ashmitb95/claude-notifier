@@ -161,6 +161,8 @@ A dedicated `SubagentStop` hook fires when a `Task` subagent finishes. The level
 - `claudeNotifier.subagentCompleted.level`: `sound+popup` | `sound` | `popup` | `off`
 - `claudeNotifier.subagentCompleted.sound`: a sound preset (default `Pop`)
 
+A subagent handing its report back reaches the parent session as a `UserPromptSubmit`, which is the event that advances the dedup stage. The notifier tells those apart from a prompt you actually typed by `prompt_id` — a hand-back reuses the one already in flight — so a subagent returning neither opens a fresh dedup window nor restarts the `minTaskDurationThreshold` clock. Without it, work that merely *followed* a subagent announced itself as a finished task.
+
 ## How it works
 
 - **Per-session dedup.** Rapid back-to-back events within a single Claude session coalesce automatically — one notification per stage, not a flood. A stage advances when you send your next prompt or after ~30 minutes of idle time.

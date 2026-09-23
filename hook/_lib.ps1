@@ -168,16 +168,26 @@ function Get-NotifierMarkerPath([string]$SessionId) {
 
 # Write the per-session task-start marker. Called from the UserPromptSubmit
 # hook. Best-effort — failure must never break the hook.
-function Save-NotifierTaskStart([string]$SessionId) {
+function Save-NotifierTaskStart([string]$SessionId, [string]$PromptId) {
     try {
         if (-not (Test-Path $LibTaskStartDir)) {
             New-Item -ItemType Directory -Path $LibTaskStartDir -Force | Out-Null
         }
         $sid = Get-NotifierSafeSessionId $SessionId
         $now = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-        $payload = @{ startedAt = $now; sessionId = $sid } | ConvertTo-Json -Compress
+        $payload = @{ startedAt = $now; sessionId = $sid; promptId = $PromptId } | ConvertTo-Json -Compress
         Set-Content -Path (Get-NotifierMarkerPath $SessionId) -Value $payload -NoNewline
     } catch {}
+}
+
+# The prompt_id of the turn currently in flight, or $null.
+function Get-NotifierPromptId([string]$SessionId) {
+    try {
+        $raw = Get-Content (Get-NotifierMarkerPath $SessionId) -Raw -ErrorAction Stop
+        $obj = $raw | ConvertFrom-Json
+        if ($null -ne $obj -and $obj.promptId) { return "$($obj.promptId)" }
+        return $null
+    } catch { return $null }
 }
 
 function Get-NotifierTaskStartedAt([string]$SessionId) {

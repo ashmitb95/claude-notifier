@@ -15,14 +15,28 @@ function markerPath(sessionId) {
   return path.join(TASK_START_DIR, `${safeSessionId(sessionId)}.json`);
 }
 
-function recordTaskStart(sessionId) {
+function recordTaskStart(sessionId, promptId) {
   try {
     fs.mkdirSync(TASK_START_DIR, { recursive: true });
     fs.writeFileSync(
       markerPath(sessionId),
-      JSON.stringify({ startedAt: Date.now(), sessionId: safeSessionId(sessionId) })
+      JSON.stringify({
+        startedAt: Date.now(),
+        sessionId: safeSessionId(sessionId),
+        promptId: promptId ?? null,
+      })
     );
   } catch {}
+}
+
+/** The prompt_id of the turn currently in flight, or null. */
+function getPromptId(sessionId) {
+  try {
+    const data = JSON.parse(fs.readFileSync(markerPath(sessionId), "utf-8"));
+    return typeof data.promptId === "string" ? data.promptId : null;
+  } catch {
+    return null;
+  }
 }
 
 function getStartTime(sessionId) {
@@ -42,4 +56,4 @@ function shouldSuppressForThreshold(sessionId, thresholdSec) {
   return Date.now() - started < t * 1000;
 }
 
-module.exports = { recordTaskStart, getStartTime, shouldSuppressForThreshold };
+module.exports = { recordTaskStart, getPromptId, getStartTime, shouldSuppressForThreshold };
