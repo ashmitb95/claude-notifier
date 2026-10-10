@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.5.1] - 2026-10-10
+
+### Fixed
+
+- **Codex task notifications said Claude had finished.** The completion signal written by the `Stop` and `SubagentStop` hooks dropped the `--agent` identity, so the extension fell back to Claude's wording for every finished task, Codex included. The signal now carries the agent through to dispatch, so Codex tasks announce "Codex has finished the task." Signals written by older hooks, which have no agent field, still default to Claude. The Codex hook registration command is unchanged, so existing Codex trust approvals carry over. Contributed by [@MoisesLaris](https://github.com/MoisesLaris). ([#106](https://github.com/ashmitb95/claude-notifier/pull/106))
+
 ## [4.5.0] - 2026-08-22
 
 ### Added
