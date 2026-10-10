@@ -102,6 +102,37 @@ describe("parseSignal", () => {
     });
   });
 
+  describe("optional agent metadata", () => {
+    it("parses an agent after the session id", () => {
+      expect(parseSignal("done 1234 abc-123 agent=codex /Users/foo/proj")).toEqual({
+        reason: "done",
+        sessionId: "abc-123",
+        cwd: "/Users/foo/proj",
+        pidChain: null,
+        agent: "codex",
+      });
+    });
+
+    it("parses an agent after the pid chain", () => {
+      expect(parseSignal("done 1234 abc-123 1001 agent=codex /Users/foo/proj")).toEqual({
+        reason: "done",
+        sessionId: "abc-123",
+        cwd: "/Users/foo/proj",
+        pidChain: [1001],
+        agent: "codex",
+      });
+    });
+
+    it("keeps cwd and omits agent for older signals", () => {
+      expect(parseSignal("done 1234 abc-123 /Users/foo/proj")).toEqual({
+        reason: "done",
+        sessionId: "abc-123",
+        cwd: "/Users/foo/proj",
+        pidChain: null,
+      });
+    });
+  });
+
   describe("v1 format (legacy): <reason> <ts> [cwd]", () => {
     it("parses cwd as third token when no session_id present", () => {
       expect(parseSignal("done 1234 /Users/foo/proj")).toEqual({

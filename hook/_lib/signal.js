@@ -4,7 +4,7 @@ const { SIGNAL_FILE } = require("./paths");
 /**
  * Write a signal for the extension to consume.
  *
- * Format v2 (current): "<reason> <ts> <session_id|-> [<pid_chain_csv>] <cwd?>"
+ * Format v2 (current): "<reason> <ts> <session_id|-> [<pid_chain_csv>] [agent=<id>] <cwd?>"
  *   session_id is a single token (no whitespace); "-" when absent.
  *   pid_chain_csv is comma-separated ancestor PIDs; omitted when absent.
  *   The parser distinguishes pid_chain from cwd by shape: digits+commas vs
@@ -15,7 +15,7 @@ const { SIGNAL_FILE } = require("./paths");
  *   Still accepted by the parser for back-compat with older deployed hooks.
  *   New writes always use v2.
  */
-function writeSignal(reason, sessionId, cwd, pidChain) {
+function writeSignal(reason, sessionId, cwd, pidChain, agent) {
   try {
     const ts = Date.now();
     const sid = sessionId ? String(sessionId).replace(/\s+/g, "") : "-";
@@ -23,9 +23,10 @@ function writeSignal(reason, sessionId, cwd, pidChain) {
     const hasChain = Array.isArray(pidChain) && pidChain.length > 0;
     const chainCsv = hasChain ? pidChain.filter((n) => Number.isInteger(n) && n > 0).join(",") : "";
     const middle = chainCsv ? ` ${chainCsv}` : "";
+    const agentField = agent ? ` agent=${String(agent).replace(/\s+/g, "")}` : "";
     const payload = cwd
-      ? `${reason} ${ts} ${safeSid}${middle} ${cwd}`
-      : `${reason} ${ts} ${safeSid}${middle}`;
+      ? `${reason} ${ts} ${safeSid}${middle}${agentField} ${cwd}`
+      : `${reason} ${ts} ${safeSid}${middle}${agentField}`;
     fs.writeFileSync(SIGNAL_FILE, payload);
   } catch {}
 }

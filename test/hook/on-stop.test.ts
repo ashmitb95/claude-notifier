@@ -24,6 +24,16 @@ describe("hook: claude-notifier-on-stop", () => {
     expect(readSignal(home.signalFile)).toMatch(/^done \d+ s-123( [0-9,]+)? \/Users\/foo\/proj$/);
   });
 
+  it("preserves the Codex agent in the completion signal", () => {
+    const res = runHook(SCRIPT, { session_id: "s-123", cwd: "/Users/foo/proj" }, home.root, {
+      args: ["--agent", "codex"],
+    });
+    expect(res.status).toBe(0);
+    expect(readSignal(home.signalFile)).toMatch(
+      /^done \d+ s-123( [0-9,]+)? agent=codex \/Users\/foo\/proj$/
+    );
+  });
+
   it("renders missing session id as '-'", () => {
     const res = runHook(SCRIPT, { cwd: "/Users/foo/proj" }, home.root);
     expect(res.status).toBe(0);

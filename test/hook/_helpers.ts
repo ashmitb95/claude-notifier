@@ -52,10 +52,10 @@ export function runHook(
   scriptPath: string,
   stdin: unknown,
   home: string,
-  opts: { keepPath?: boolean; extraEnv?: Record<string, string> } = {}
+  opts: { keepPath?: boolean; extraEnv?: Record<string, string>; args?: string[] } = {}
 ): RunResult {
   const started = Date.now();
-  const res = spawnSync(process.execPath, [scriptPath], {
+  const res = spawnSync(process.execPath, [scriptPath, ...(opts.args ?? [])], {
     input: typeof stdin === "string" ? stdin : JSON.stringify(stdin),
     env: {
       ...process.env,

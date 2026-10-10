@@ -60,7 +60,7 @@ function handleSignal(): void {
   }
   if (!content) return;
 
-  const { reason, sessionId, cwd, pidChain } = parseSignal(content);
+  const { reason, sessionId, cwd, pidChain, agent } = parseSignal(content);
   log("signal:", reason, sessionId ?? "-", cwd || "(no cwd)");
 
   // UserPromptSubmit is coordination-only — advance the stage and exit.
@@ -98,7 +98,7 @@ function handleSignal(): void {
       return;
     }
     lastSignalSessionId = sessionId;
-    showNotification(reason, cwd);
+    showNotification(reason, cwd, agent);
   }
 
   if (reason === "subagent_done") {
@@ -106,7 +106,7 @@ function handleSignal(): void {
     // and each finish is its own event. Level defaults to "off" so the
     // notification path stays silent unless the user opts in.
     lastSignalSessionId = sessionId;
-    showNotification(reason, cwd);
+    showNotification(reason, cwd, agent);
   }
 
   // doneDebounceMs is deprecated — stage dedup replaces it. Log once so
@@ -134,7 +134,7 @@ function warnDeprecatedSettingOnce(): void {
   }
 }
 
-function showNotification(reason: string, cwd: string): void {
+function showNotification(reason: string, cwd: string, agent?: string): void {
   // Auto-mute when focused: if the user is looking at this window, the extension
   // notification is redundant. Suppress the extension-played sound + all popups.
   // This is per-window-correct because dispatch only reaches here for signals in
@@ -182,6 +182,8 @@ function showNotification(reason: string, cwd: string): void {
       vscode.window.showInformationMessage("Claude is asking you a question.");
     }
   } else if (reason === "done") {
+    const agentLabel = agent === "codex" ? "Codex" : "Claude";
+    const doneMessage = `${agentLabel} has finished the task.`;
     const level = getEventLevel("taskCompleted");
     const threshold = getMinTaskDurationThreshold();
     if (shouldSuppressForThreshold(lastSignalSessionId, threshold)) return;
@@ -200,19 +202,17 @@ function showNotification(reason: string, cwd: string): void {
       }
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
-      vscode.window
-        .showInformationMessage("Claude has finished the task.", "Reveal")
-        .then((pick) => {
-          if (pick === "Reveal") {
-            void revealClaudeTab(getRememberedDone(cwd));
-          }
-        });
+      vscode.window.showInformationMessage(doneMessage, "Reveal").then((pick) => {
+        if (pick === "Reveal") {
+          void revealClaudeTab(getRememberedDone(cwd));
+        }
+      });
       if (!isRemote) {
         const parts = getBodyParts();
         const { title, body } = safeCompose(
           getWorkspaceTitle(cwd),
           eventLabel(getEventConfig("taskCompleted").label, EVENTS.DONE),
-          "Claude has finished the task.",
+          doneMessage,
           () => {
             if (!parts.chatTitle && !parts.detail) return {};
             const sid = lastSignalSessionId ?? undefined;
@@ -229,6 +229,7 @@ function showNotification(reason: string, cwd: string): void {
       }
     }
   } else if (reason === "subagent_done") {
+    const agentLabel = agent === "codex" ? "Codex" : "Claude";
     const level = getEventLevel("subagentCompleted");
     const threshold = getMinTaskDurationThreshold();
     if (shouldSuppressForThreshold(lastSignalSessionId, threshold)) return;
@@ -247,7 +248,7 @@ function showNotification(reason: string, cwd: string): void {
       }
     }
     if (level === LEVELS.SOUND_POPUP || level === LEVELS.POPUP) {
-      vscode.window.showInformationMessage("Claude subagent finished.");
+      vscode.window.showInformationMessage(`${agentLabel} subagent finished.`);
     }
   }
 }

@@ -81,4 +81,11 @@ describe("hook/_lib/signal — writeSignal", () => {
     signal.writeSignal("done", "abc", "/Users/foo", [1001, 0, -5, 1.5, 2002]);
     expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(/^done \d+ abc 1001,2002 \/Users\/foo$/);
   });
+
+  it("writes optional agent metadata after the pid chain", () => {
+    signal.writeSignal("done", "abc", "/Users/foo", [1001], "codex");
+    expect(fs.readFileSync(SIGNAL_FILE, "utf-8")).toMatch(
+      /^done \d+ abc 1001 agent=codex \/Users\/foo$/
+    );
+  });
 });

@@ -9,6 +9,8 @@ export interface ParsedSignal {
    * clicked. Null when absent (Windows, non-Stop hooks, or older deployments).
    */
   pidChain: number[] | null;
+  /** Hook agent identity. Missing on signals emitted by older hook versions. */
+  agent?: string;
 }
 
 const PID_CHAIN_RE = /^[0-9]+(,[0-9]+)*$/;
@@ -16,7 +18,7 @@ const PID_CHAIN_RE = /^[0-9]+(,[0-9]+)*$/;
 /**
  * Signal formats written by hook scripts:
  *
- * v2 (current): "<reason> <ts> <session_id|-> [<pid_chain_csv>] <cwd?>"
+ * v2 (current): "<reason> <ts> <session_id|-> [<pid_chain_csv>] [agent=<id>] <cwd?>"
  *   session_id is "-" when missing; cwd is optional.
  *   pid_chain_csv is comma-separated ancestor PIDs; the parser distinguishes
  *   it from cwd by shape (digits+commas vs path separator). When absent the
@@ -47,8 +49,16 @@ export function parseSignal(content: string): ParsedSignal {
       pidChain = fourth.split(",").map((s) => Number.parseInt(s, 10));
       cwdStart = 4;
     }
+    let agent: string | undefined;
+    const agentMatch = parts[cwdStart]?.match(/^agent=([a-z0-9_-]+)$/i);
+    if (agentMatch) {
+      agent = agentMatch[1];
+      cwdStart++;
+    }
     const cwd = parts.slice(cwdStart).join(" ");
-    return { reason, sessionId, cwd, pidChain };
+    return agent
+      ? { reason, sessionId, cwd, pidChain, agent }
+      : { reason, sessionId, cwd, pidChain };
   }
 
   // v1 fallback: "<reason> <ts> <cwd?>"

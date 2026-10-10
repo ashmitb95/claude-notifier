@@ -32,7 +32,14 @@ process.stdin.on("end", () => {
   if (isMuted()) process.exit(0);
 
   const cwd = (input && input.cwd) || process.cwd() || "";
-  writeSignal("subagent_done", input.session_id, cwd);
+  const agent = agentId();
+  writeSignal(
+    "subagent_done",
+    input.session_id,
+    cwd,
+    undefined,
+    agent === "codex" ? agent : undefined
+  );
 
   // Extension owns this cwd → it handles sound + popup via dispatch.
   if (extensionOwnsCwd(cwd)) process.exit(0);

@@ -38,7 +38,8 @@ process.stdin.on("end", () => {
   const cwd = (input && input.cwd) || process.cwd() || "";
   const pidChain = getAncestorPids();
 
-  writeSignal("done", input.session_id, cwd, pidChain);
+  const agent = agentId();
+  writeSignal("done", input.session_id, cwd, pidChain, agent === "codex" ? agent : undefined);
 
   // If a VSCode window owns this cwd, the extension handles sound/notification
   // with debounce. Otherwise fall through to direct playback.
