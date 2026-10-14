@@ -2,6 +2,10 @@
 # Dot-sourced by each hook: `. (Join-Path $PSScriptRoot '_lib.ps1')`.
 $ErrorActionPreference = 'SilentlyContinue'
 
+# Windows PowerShell 5.1 decodes stdin with the OEM code page and BOM-less
+# files as ANSI; Claude Code's payload and transcripts are UTF-8.
+[Console]::SetIn([IO.StreamReader]::new([Console]::OpenStandardInput(), [Text.Encoding]::UTF8))
+
 $LibHooksDir   = $PSScriptRoot
 $LibMuteFlag   = Join-Path $LibHooksDir 'claude-notifier-muted'
 $LibSignalFile = Join-Path $LibHooksDir 'claude-signal'
@@ -39,7 +43,7 @@ function Resolve-NotifierSound([string]$Name, [string]$Default) {
 
 # Read claude-notifier-config.json. Returns $null on any error.
 function Read-NotifierConfig() {
-    try { return (Get-Content $LibConfigFile -Raw) | ConvertFrom-Json } catch { return $null }
+    try { return (Get-Content $LibConfigFile -Raw -Encoding UTF8) | ConvertFrom-Json } catch { return $null }
 }
 
 # Returns $true when the global mute flag is set.
@@ -152,7 +156,7 @@ function Get-NotifierChatTitle([string]$TranscriptPath, [string]$SessionId, [str
 
     # ai-title and custom-title are written near the start of a transcript while
     # transcripts reach tens of MB, so only the first lines are read.
-    $lines = Get-Content -Path $file -TotalCount 400 -ErrorAction SilentlyContinue
+    $lines = Get-Content -Path $file -TotalCount 400 -Encoding UTF8 -ErrorAction SilentlyContinue
     if (-not $lines) { return '' }
     $recs = @()
     foreach ($line in $lines) {
