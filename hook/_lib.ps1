@@ -301,13 +301,15 @@ function Show-NotifierNotification([string]$Message, [string]$Title = 'Claude No
 # Write a signal for the extension.
 # Format v2: "<reason> <ts> <session_id|-> [cwd]" (matches hook/_lib/signal.js).
 # Session id is whitespace-stripped; "-" when absent.
+# Written as BOM-less UTF-8: the extension reads it as UTF-8, and Set-Content in
+# Windows PowerShell 5.1 would use the ANSI code page, garbling non-ASCII cwds.
 function Write-NotifierSignal([string]$Reason, [string]$SessionId, [string]$Cwd) {
     try {
         $ts = (Get-Date -UFormat %s)
         $sid = if ($SessionId) { ($SessionId -replace '\s+', '') } else { '-' }
         if (-not $sid) { $sid = '-' }
         $payload = if ($Cwd) { "$Reason $ts $sid $Cwd" } else { "$Reason $ts $sid" }
-        Set-Content -Path $LibSignalFile -Value $payload -NoNewline
+        [IO.File]::WriteAllText($LibSignalFile, $payload, (New-Object System.Text.UTF8Encoding($false)))
     } catch {}
 }
 
