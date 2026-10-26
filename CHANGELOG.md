@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.2] - 2026-10-26
+
+### Fixed
+
+- **Garbled text in Windows notifications.** The PowerShell hooks run under Windows PowerShell 5.1, which reads input in the ANSI code page unless told otherwise, so the UTF-8 from Claude Code came out mangled: `âœ… finished` instead of `✅ finished`, `RelatÃ³rio` instead of `Relatório`. `_lib.ps1` now decodes stdin, the notifier config and the session transcript as UTF-8. Contributed by [@ffapd1989](https://github.com/ffapd1989). ([#107](https://github.com/ashmitb95/claude-notifier/issues/107), [#108](https://github.com/ashmitb95/claude-notifier/pull/108))
+- **No notification on Windows when the workspace path contains non-ASCII characters.** The hooks wrote the signal file in the ANSI code page, but the extension reads it as UTF-8. A path like `C:\Users\me\OneDrive\ドキュメント\projects` arrived garbled, matched no open window, and the notification was dropped. The signal file is now written as UTF-8 without a BOM. Contributed by [@swirhen](https://github.com/swirhen). ([#110](https://github.com/ashmitb95/claude-notifier/pull/110))
+
 ## [4.5.1] - 2026-10-10
 
 ### Fixed
