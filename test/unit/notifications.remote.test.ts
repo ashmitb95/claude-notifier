@@ -4,15 +4,43 @@ import * as os from "os";
 import * as path from "path";
 import * as net from "net";
 
-// remote.ts imports vscode (for the terminal-bell path); stub the surface it uses.
+const terminalMock = vi.hoisted(() => ({
+  writes: [] as string[],
+  createTerminal: vi.fn(),
+  executeCommand: vi.fn(),
+  terminal: {
+    show: vi.fn(),
+    dispose: vi.fn(),
+    sendText: vi.fn(),
+  },
+}));
+
+// remote.ts imports vscode for the terminal-bell path; stub the surface it uses.
 vi.mock("vscode", () => ({
+  EventEmitter: class<T> {
+    private listeners = new Set<(event: T) => void>();
+    readonly event = (listener: (event: T) => void) => {
+      this.listeners.add(listener);
+      return { dispose: () => this.listeners.delete(listener) };
+    };
+    fire(event: T): void {
+      if (event === "\u0007") terminalMock.writes.push(event);
+      for (const listener of this.listeners) listener(event);
+    }
+    dispose(): void {
+      this.listeners.clear();
+    }
+  },
   workspace: {
     getConfiguration: () => ({
       get: <T>(_k: string, d?: T) => d,
       update: () => Promise.resolve(),
     }),
   },
-  commands: { executeCommand: () => Promise.resolve() },
+  window: {
+    createTerminal: terminalMock.createTerminal.mockImplementation(() => terminalMock.terminal),
+  },
+  commands: { executeCommand: terminalMock.executeCommand },
   ConfigurationTarget: { Global: 1 },
 }));
 
@@ -37,6 +65,12 @@ function listen(): Promise<{ port: number; received: Promise<string>; close: () 
 }
 
 beforeEach(() => {
+  terminalMock.writes.length = 0;
+  terminalMock.createTerminal.mockClear();
+  terminalMock.executeCommand.mockClear();
+  terminalMock.terminal.show.mockClear();
+  terminalMock.terminal.dispose.mockClear();
+  terminalMock.terminal.sendText.mockClear();
   tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "remote-audio-ext-"));
   const hooksDir = path.join(tmpRoot, ".claude", "hooks");
   configFile = path.join(hooksDir, "claude-notifier-config.json");
@@ -72,5 +106,28 @@ describe("extension pushRemoteAudio — src/notifications/remote.ts", () => {
     expect(pushRemoteAudio("done", "Hero", 0.5)).toBe(true);
     expect(JSON.parse(await received)).toEqual({ reason: "done", sound: "Hero", volume: 0.5 });
     close();
+  });
+});
+
+describe("playRemoteSound fallback", () => {
+  it("writes BEL to a pseudo-terminal output stream instead of terminal input", async () => {
+    vi.resetModules();
+    const { playRemoteSound } = await import("../../src/notifications/remote");
+
+    playRemoteSound();
+
+    expect(terminalMock.createTerminal).toHaveBeenCalledOnce();
+    const options = terminalMock.createTerminal.mock.calls[0]?.[0] as {
+      pty: { open: (dimensions: undefined) => void };
+    };
+    options.pty.open(undefined);
+
+    expect(terminalMock.writes).toEqual(["\u0007"]);
+    expect(terminalMock.terminal.show).toHaveBeenCalledWith(true);
+    expect(terminalMock.terminal.sendText).not.toHaveBeenCalled();
+    expect(terminalMock.executeCommand).not.toHaveBeenCalledWith(
+      "workbench.action.terminal.sendSequence",
+      expect.anything()
+    );
   });
 });

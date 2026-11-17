@@ -30,7 +30,9 @@ export function pushRemoteAudio(reason: string, soundName: string, volume: numbe
 
 export function playRemoteSound(): void {
   // In remote sessions, webview audio is blocked by Electron's autoplay policy.
-  // Use the terminal bell instead — VS Code forwards BEL to the local client.
+  // Use a dedicated pseudo-terminal output stream instead. Terminal.sendText
+  // (and the sendSequence command) writes to the foreground program's input,
+  // where BEL is indistinguishable from Ctrl+G and can trigger TUI shortcuts.
   // `terminal.integrated.enableBell` now only drives the *visual* bell; the
   // audible bell lives under `accessibility.signals.terminalBell.sound`, so
   // enable both or no sound is produced.
@@ -42,7 +44,41 @@ export function playRemoteSound(): void {
   if (signalConfig.get<{ sound?: string }>("terminalBell")?.sound !== "on") {
     signalConfig.update("terminalBell", { sound: "on" }, vscode.ConfigurationTarget.Global);
   }
-  vscode.commands.executeCommand("workbench.action.terminal.sendSequence", {
-    text: "",
+
+  const writeEmitter = new vscode.EventEmitter<string>();
+  const closeEmitter = new vscode.EventEmitter<void | number>();
+  let closeTimer: NodeJS.Timeout | undefined;
+  let disposed = false;
+
+  const disposeEmitters = () => {
+    if (disposed) return;
+    disposed = true;
+    if (closeTimer) clearTimeout(closeTimer);
+    writeEmitter.dispose();
+    closeEmitter.dispose();
+  };
+
+  const pty: vscode.Pseudoterminal = {
+    onDidWrite: writeEmitter.event,
+    onDidClose: closeEmitter.event,
+    open: () => {
+      // Pseudoterminal output goes to the terminal renderer, which is the
+      // correct place to interpret BEL as a bell rather than terminal input.
+      writeEmitter.fire("\u0007");
+      closeTimer = setTimeout(() => {
+        closeEmitter.fire(0);
+        disposeEmitters();
+      }, 250);
+    },
+    close: disposeEmitters,
+  };
+
+  const terminal = vscode.window.createTerminal({
+    name: "Claude Notifier Bell",
+    pty,
+    isTransient: true,
   });
+  // Preserve editor focus. The transient terminal is closed as soon as the
+  // renderer has received the BEL.
+  terminal.show(true);
 }
