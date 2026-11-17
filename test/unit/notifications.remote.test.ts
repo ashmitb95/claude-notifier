@@ -5,7 +5,6 @@ import * as path from "path";
 import * as net from "net";
 
 const terminalMock = vi.hoisted(() => ({
-  writes: [] as string[],
   createTerminal: vi.fn(),
   executeCommand: vi.fn(),
   terminal: {
@@ -24,7 +23,6 @@ vi.mock("vscode", () => ({
       return { dispose: () => this.listeners.delete(listener) };
     };
     fire(event: T): void {
-      if (event === "\u0007") terminalMock.writes.push(event);
       for (const listener of this.listeners) listener(event);
     }
     dispose(): void {
@@ -65,7 +63,6 @@ function listen(): Promise<{ port: number; received: Promise<string>; close: () 
 }
 
 beforeEach(() => {
-  terminalMock.writes.length = 0;
   terminalMock.createTerminal.mockClear();
   terminalMock.executeCommand.mockClear();
   terminalMock.terminal.show.mockClear();
@@ -109,25 +106,95 @@ describe("extension pushRemoteAudio — src/notifications/remote.ts", () => {
   });
 });
 
-describe("playRemoteSound fallback", () => {
-  it("writes BEL to a pseudo-terminal output stream instead of terminal input", async () => {
-    vi.resetModules();
-    const { playRemoteSound } = await import("../../src/notifications/remote");
+interface BellPty {
+  onDidWrite: (listener: (data: string) => void) => unknown;
+  onDidClose: (listener: (code: void | number) => void) => unknown;
+  open: (dimensions: undefined) => void;
+  close: () => void;
+}
 
+describe("playRemoteSound fallback", () => {
+  let playRemoteSound: () => void;
+
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    vi.resetModules();
+    ({ playRemoteSound } = await import("../../src/notifications/remote"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function bellPty(call = 0): { pty: BellPty; writes: string[]; closes: (void | number)[] } {
+    const options = terminalMock.createTerminal.mock.calls[call]?.[0] as { pty: BellPty };
+    const writes: string[] = [];
+    const closes: (void | number)[] = [];
+    options.pty.onDidWrite((d) => writes.push(d));
+    options.pty.onDidClose((c) => closes.push(c));
+    return { pty: options.pty, writes, closes };
+  }
+
+  it("writes BEL to a pseudo-terminal output stream instead of terminal input", () => {
     playRemoteSound();
 
     expect(terminalMock.createTerminal).toHaveBeenCalledOnce();
-    const options = terminalMock.createTerminal.mock.calls[0]?.[0] as {
-      pty: { open: (dimensions: undefined) => void };
-    };
-    options.pty.open(undefined);
+    const { pty, writes, closes } = bellPty();
+    pty.open(undefined);
+    vi.runAllTimers();
 
-    expect(terminalMock.writes).toEqual(["\u0007"]);
-    expect(terminalMock.terminal.show).toHaveBeenCalledWith(true);
+    expect(writes).toEqual(["\u0007"]);
+    expect(closes).toEqual([0]);
     expect(terminalMock.terminal.sendText).not.toHaveBeenCalled();
     expect(terminalMock.executeCommand).not.toHaveBeenCalledWith(
       "workbench.action.terminal.sendSequence",
       expect.anything()
     );
+  });
+
+  it("does not show the bell terminal, so the panel and active tab stay put", () => {
+    playRemoteSound();
+    bellPty().pty.open(undefined);
+    vi.runAllTimers();
+
+    expect(terminalMock.terminal.show).not.toHaveBeenCalled();
+  });
+
+  it("waits until VS Code listens for bells before writing BEL", () => {
+    playRemoteSound();
+    const { pty, writes, closes } = bellPty();
+    pty.open(undefined);
+
+    // VS Code attaches its onBell listener 1000 ms after creating the terminal.
+    vi.advanceTimersByTime(1000);
+    expect(writes).toEqual([]);
+
+    vi.advanceTimersByTime(500);
+    expect(writes).toEqual(["\u0007"]);
+    expect(closes).toEqual([]);
+
+    vi.advanceTimersByTime(1000);
+    expect(closes).toEqual([0]);
+  });
+
+  it("rings once for events that arrive while a bell is pending", () => {
+    playRemoteSound();
+    playRemoteSound();
+    expect(terminalMock.createTerminal).toHaveBeenCalledOnce();
+
+    bellPty().pty.open(undefined);
+    vi.runAllTimers();
+
+    playRemoteSound();
+    expect(terminalMock.createTerminal).toHaveBeenCalledTimes(2);
+  });
+
+  it("disposes a bell terminal that never opens and allows the next bell", () => {
+    playRemoteSound();
+    vi.advanceTimersByTime(10_000);
+
+    expect(terminalMock.terminal.dispose).toHaveBeenCalledOnce();
+    playRemoteSound();
+    expect(terminalMock.createTerminal).toHaveBeenCalledTimes(2);
   });
 });
